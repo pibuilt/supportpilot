@@ -1,10 +1,10 @@
-from fastapi import FastAPI
+from fastapi import APIRouter
 import time
 
-app = FastAPI()
+router = APIRouter()
 
 
-@app.get("/health")
+@router.get("/health")
 async def health():
     return {
         "status": "ok",
