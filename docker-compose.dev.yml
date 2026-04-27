@@ -1,0 +1,9 @@
+services:
+  api-gateway:
+    build: .
+    container_name: sp_api_gateway
+    ports:
+      - "8000:8000"
+    environment:
+      - ENV=dev
+    restart: unless-stopped
