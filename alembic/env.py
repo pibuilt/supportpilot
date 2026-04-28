@@ -7,6 +7,10 @@ from alembic import context
 
 from app.db.base import Base
 from app.db.models.ticket import Ticket
+from app.db.models.message import Message
+from app.db.models.embedding import Embedding
+from app.db.models.api_key import APIKey
+from app.db.models.usage_log import UsageLog
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
