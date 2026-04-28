@@ -1,0 +1,5 @@
+ARCHITECTURE.md
+.venv/
+.env
+__pycache__/
+*.pyc
