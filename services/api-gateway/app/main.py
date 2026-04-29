@@ -3,6 +3,7 @@ from fastapi.exceptions import RequestValidationError
 from app.routes.health import router as health_router
 from app.middleware.request_context import RequestContextMiddleware
 from app.utils.response import error_response
+from app.api.v1.ingestion import router as ingestion_router
 
 app = FastAPI()
 
@@ -11,7 +12,7 @@ app.add_middleware(RequestContextMiddleware)
 
 # Routes
 app.include_router(health_router)
-
+app.include_router(ingestion_router, prefix="/v1")
 
 # Global Exception Handler
 @app.exception_handler(RequestValidationError)

@@ -23,9 +23,29 @@ Write-Host "Applying migrations..."
 alembic upgrade head
 
 Write-Host ""
-Write-Host "Verifying API health..."
-Invoke-WebRequest http://localhost:8000/health -UseBasicParsing
+Write-Host "Waiting for API readiness..."
+
+$maxAttempts = 15
+$attempt = 1
+$apiReady = $false
+
+while ($attempt -le $maxAttempts) {
+    try {
+        Invoke-WebRequest http://localhost:8000/health -UseBasicParsing | Out-Null
+        $apiReady = $true
+        break
+    } catch {
+        Write-Host "API not ready yet... attempt $attempt/$maxAttempts"
+        Start-Sleep -Seconds 2
+        $attempt++
+    }
+}
+
+if (-not $apiReady) {
+    Write-Error "API failed to become healthy."
+    exit 1
+}
 
 Write-Host ""
-Write-Host "SupportPilot bootstrap complete."
+Write-Host "SupportPilot bootstrap completed successfully."
 Write-Host ""
