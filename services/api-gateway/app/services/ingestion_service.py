@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.rag.chunker import chunk_text
 from app.repositories.embedding_repository import EmbeddingRepository
+from app.services.embedding_service import generate_fake_embedding
 
 
 class IngestionService:
@@ -13,13 +14,6 @@ class IngestionService:
     def __init__(self, db: Session):
         self.db = db
         self.embedding_repo = EmbeddingRepository(db)
-
-    def generate_placeholder_embedding(self) -> list[float]:
-        """
-        Placeholder vector for Day 7.
-        Day 8 replaces this with nomic-embed-text.
-        """
-        return [0.0] * self.EMBEDDING_DIMENSION
 
     def ingest_document(self, document_id: str, text: str):
         chunks = chunk_text(text)
@@ -37,7 +31,7 @@ class IngestionService:
                     chunk_id=chunk_id,
                     embedding_model=self.EMBEDDING_MODEL,
                     embedding_version=self.EMBEDDING_VERSION,
-                    vector=self.generate_placeholder_embedding(),
+                    vector=generate_fake_embedding(chunk),
                 )
 
                 created_records.append(
