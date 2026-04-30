@@ -7,9 +7,12 @@ class SearchRequest(BaseModel):
 
 
 class SearchResult(BaseModel):
-    chunk_id: str
     document_id: str
+    chunk_id: str
     score: float
+    semantic_score: float
+    keyword_score: float
+    rerank_score: float
 
 
 class SearchResponse(BaseModel):

@@ -34,7 +34,7 @@ class EmbeddingRepository:
         query_vector: list[float],
         limit: int = 5,
     ):
-        return (
+        results = (
             self.db.query(
                 Embedding.document_id,
                 Embedding.chunk_id,
@@ -44,3 +44,19 @@ class EmbeddingRepository:
             .limit(limit)
             .all()
         )
+
+        formatted_results = []
+
+        for row in results:
+            semantic_score = 1 - float(row.distance)
+
+            formatted_results.append(
+                {
+                    "document_id": row.document_id,
+                    "chunk_id": row.chunk_id,
+                    "score": semantic_score,
+                    "preview": row.chunk_id,
+                }
+            )
+
+        return formatted_results

@@ -21,9 +21,12 @@ def semantic_search(
 
     formatted_results = [
         {
-            "document_id": result.document_id,
-            "chunk_id": result.chunk_id,
-            "score": 1 - result.distance,
+            "document_id": result["document_id"],
+            "chunk_id": result["chunk_id"],
+            "score": result["score"],
+            "semantic_score": result["semantic_score"],
+            "keyword_score": result["keyword_score"],
+            "rerank_score": result["rerank_score"],
         }
         for result in results
     ]
