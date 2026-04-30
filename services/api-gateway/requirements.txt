@@ -4,3 +4,4 @@ sqlalchemy==2.0.30
 psycopg2-binary==2.9.9
 alembic==1.13.1
 pgvector==0.2.5
+requests==2.32.3

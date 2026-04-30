@@ -1,15 +1,16 @@
+import os
 import uuid
 from sqlalchemy.orm import Session
 
 from app.rag.chunker import chunk_text
 from app.repositories.embedding_repository import EmbeddingRepository
-from app.services.embedding_service import generate_fake_embedding
+from app.services.embedding_service import generate_embedding
 
 
 class IngestionService:
-    EMBEDDING_DIMENSION = 768
-    EMBEDDING_MODEL = "placeholder"
-    EMBEDDING_VERSION = "v1"
+    EMBEDDING_DIMENSION = int(os.getenv("OLLAMA_EMBED_DIMENSION", "768"))
+    EMBEDDING_MODEL = os.getenv("OLLAMA_EMBED_MODEL", "nomic-embed-text")
+    EMBEDDING_VERSION = os.getenv("OLLAMA_EMBED_VERSION", "v1")
 
     def __init__(self, db: Session):
         self.db = db
@@ -31,7 +32,7 @@ class IngestionService:
                     chunk_id=chunk_id,
                     embedding_model=self.EMBEDDING_MODEL,
                     embedding_version=self.EMBEDDING_VERSION,
-                    vector=generate_fake_embedding(chunk),
+                    vector=generate_embedding(chunk),
                 )
 
                 created_records.append(

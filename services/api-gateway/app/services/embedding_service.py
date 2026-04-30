@@ -1,12 +1,26 @@
-import hashlib
+import os
+import requests
 
 
-def generate_fake_embedding(text: str, dimensions: int = 768) -> list[float]:
-    seed = hashlib.sha256(text.encode()).digest()
+OLLAMA_URL = os.getenv(
+    "OLLAMA_URL"
+)
 
-    values = []
-    for i in range(dimensions):
-        byte = seed[i % len(seed)]
-        values.append((byte / 255.0) * 2 - 1)
+OLLAMA_MODEL = os.getenv(
+    "OLLAMA_MODEL"
+)
 
-    return values
+
+def generate_embedding(text: str) -> list[float]:
+    response = requests.post(
+        OLLAMA_URL,
+        json={
+            "model": OLLAMA_MODEL,
+            "prompt": text,
+        },
+        timeout=30,
+    )
+
+    response.raise_for_status()
+
+    return response.json()["embedding"]
