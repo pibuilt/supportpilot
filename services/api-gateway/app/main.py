@@ -5,6 +5,7 @@ from app.middleware.request_context import RequestContextMiddleware
 from app.utils.response import error_response
 from app.api.v1.ingestion import router as ingestion_router
 from app.api.v1.search import router as search_router
+from app.api.v1.analyze import router as analysis_router
 
 app = FastAPI()
 
@@ -15,6 +16,7 @@ app.add_middleware(RequestContextMiddleware)
 app.include_router(health_router)
 app.include_router(ingestion_router, prefix="/v1")
 app.include_router(search_router)
+app.include_router(analysis_router)
 
 # Global Exception Handler
 @app.exception_handler(RequestValidationError)

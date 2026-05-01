@@ -2,24 +2,28 @@ from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.schemas.ingestion import DocumentIngestRequest
-from app.services.ingestion_service import IngestionService
+from app.schemas.analysis import (
+    ContractAnalysisRequest,
+    ContractAnalysisResponse,
+)
+from app.services.contract_analysis_service import analyze_contract
 from app.utils.response import success_response
 
-router = APIRouter()
+router = APIRouter(prefix="/v1", tags=["analysis"])
 
 
-@router.post("/ingest")
-def ingest_document(
-    payload: DocumentIngestRequest,
+@router.post(
+    "/analyze",
+    response_model=dict,
+)
+def analyze_contract_endpoint(
+    payload: ContractAnalysisRequest,
     request: Request,
     db: Session = Depends(get_db),
 ):
-    service = IngestionService(db)
-
-    result = service.ingest_document(
+    result = analyze_contract(
         document_id=payload.document_id,
-        text=payload.text,
+        db=db,
     )
 
     request_id = getattr(request.state, "request_id", "unknown")

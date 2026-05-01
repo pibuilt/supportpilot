@@ -12,6 +12,7 @@ class EmbeddingRepository:
         embedding_id: str,
         document_id: str,
         chunk_id: str,
+        chunk_text: str,
         embedding_model: str,
         embedding_version: str,
         vector: list[float],
@@ -20,6 +21,7 @@ class EmbeddingRepository:
             id=embedding_id,
             document_id=document_id,
             chunk_id=chunk_id,
+            chunk_text=chunk_text,
             embedding_model=embedding_model,
             embedding_version=embedding_version,
             embedding=vector,
@@ -33,14 +35,22 @@ class EmbeddingRepository:
         self,
         query_vector: list[float],
         limit: int = 5,
+        document_id: str | None = None,
     ):
+        query = self.db.query(
+            Embedding.document_id,
+            Embedding.chunk_id,
+            Embedding.chunk_text,
+            Embedding.embedding.cosine_distance(query_vector).label("distance"),
+        )
+
+        if document_id:
+            query = query.filter(Embedding.document_id == document_id)
+
         results = (
-            self.db.query(
-                Embedding.document_id,
-                Embedding.chunk_id,
-                Embedding.embedding.cosine_distance(query_vector).label("distance"),
+            query.order_by(
+                Embedding.embedding.cosine_distance(query_vector)
             )
-            .order_by(Embedding.embedding.cosine_distance(query_vector))
             .limit(limit)
             .all()
         )
@@ -54,8 +64,13 @@ class EmbeddingRepository:
                 {
                     "document_id": row.document_id,
                     "chunk_id": row.chunk_id,
+                    "chunk_text": row.chunk_text,
                     "score": semantic_score,
-                    "preview": row.chunk_id,
+                    "preview": (
+                        row.chunk_text[:200]
+                        if row.chunk_text
+                        else row.chunk_id
+                    ),
                 }
             )
 

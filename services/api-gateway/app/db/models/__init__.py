@@ -1,0 +1,1 @@
+from app.db.models.clause_analysis import ClauseAnalysis

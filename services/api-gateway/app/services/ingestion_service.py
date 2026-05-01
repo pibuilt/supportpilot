@@ -30,6 +30,7 @@ class IngestionService:
                     embedding_id=embedding_id,
                     document_id=document_id,
                     chunk_id=chunk_id,
+                    chunk_text=chunk,
                     embedding_model=self.EMBEDDING_MODEL,
                     embedding_version=self.EMBEDDING_VERSION,
                     vector=generate_embedding(chunk),
