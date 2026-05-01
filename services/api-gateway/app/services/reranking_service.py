@@ -5,9 +5,9 @@ def normalize_text(text: str) -> set:
     return set(text.lower().split())
 
 
-def keyword_overlap_score(query: str, chunk_preview: str) -> float:
+def keyword_overlap_score(query: str, chunk_text: str) -> float:
     query_tokens = normalize_text(query)
-    chunk_tokens = normalize_text(chunk_preview)
+    chunk_tokens = normalize_text(chunk_text)
 
     if not query_tokens:
         return 0.0
@@ -20,26 +20,72 @@ def keyword_overlap_score(query: str, chunk_preview: str) -> float:
 def rerank_results(query: str, results: List[Dict]) -> List[Dict]:
     reranked = []
 
+    query_lower = query.lower()
+
     for result in results:
         semantic_score = float(result.get("score", 0.0))
 
         chunk_text = (
-            result.get("preview")
-            or result.get("chunk_text")
+            result.get("chunk_text")
+            or result.get("preview")
             or result.get("content")
             or ""
         )
 
-        keyword_score = keyword_overlap_score(query, chunk_text)
+        chunk_lower = chunk_text.lower()
 
-        final_score = (0.7 * semantic_score) + (0.3 * keyword_score)
+        keyword_score = keyword_overlap_score(
+            query,
+            chunk_text,
+        )
 
-        result["semantic_score"] = semantic_score
-        result["keyword_score"] = keyword_score
-        result["rerank_score"] = final_score
+        exact_phrase_bonus = (
+            0.15 if query_lower in chunk_lower else 0.0
+        )
 
-        reranked.append(result)
+        query_terms = query_lower.split()
 
-    reranked.sort(key=lambda x: x["rerank_score"], reverse=True)
+        keyword_matches = sum(
+            1 for term in query_terms
+            if term in chunk_lower
+        )
+
+        density_bonus = min(
+            keyword_matches * 0.03,
+            0.15,
+        )
+
+        final_score = (
+            (0.65 * semantic_score)
+            + (0.25 * keyword_score)
+            + exact_phrase_bonus
+            + density_bonus
+        )
+
+        boosted_result = result.copy()
+
+        boosted_result["semantic_score"] = round(
+            semantic_score,
+            4,
+        )
+
+        boosted_result["keyword_score"] = round(
+            keyword_score,
+            4,
+        )
+
+        boosted_result["keyword_matches"] = keyword_matches
+
+        boosted_result["rerank_score"] = round(
+            final_score,
+            4,
+        )
+
+        reranked.append(boosted_result)
+
+    reranked.sort(
+        key=lambda x: x["rerank_score"],
+        reverse=True,
+    )
 
     return reranked

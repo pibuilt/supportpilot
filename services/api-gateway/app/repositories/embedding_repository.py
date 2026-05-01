@@ -45,7 +45,9 @@ class EmbeddingRepository:
         )
 
         if document_id:
-            query = query.filter(Embedding.document_id == document_id)
+            query = query.filter(
+                Embedding.document_id == document_id
+            )
 
         results = (
             query.order_by(
@@ -67,7 +69,7 @@ class EmbeddingRepository:
                     "chunk_text": row.chunk_text,
                     "score": semantic_score,
                     "preview": (
-                        row.chunk_text[:200]
+                        row.chunk_text[:120]
                         if row.chunk_text
                         else row.chunk_id
                     ),

@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from app.routes.health import router as health_router
 from app.middleware.request_context import RequestContextMiddleware
-from app.utils.response import error_response
+from app.utils.response import error_response, success_response
 from app.api.v1.ingestion import router as ingestion_router
 from app.api.v1.search import router as search_router
 from app.api.v1.analyze import router as analysis_router

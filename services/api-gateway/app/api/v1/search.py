@@ -1,34 +1,37 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
+from app.utils.response import success_response
 from app.db.session import get_db
-from app.schemas.search import SearchRequest, SearchResponse
+from app.schemas.search import SearchRequest
 from app.services.retrieval_service import search_documents
 
-router = APIRouter(prefix="/v1/search", tags=["search"])
+router = APIRouter(
+    prefix="/v1",
+    tags=["Search"],
+)
 
 
-@router.post("", response_model=SearchResponse)
+@router.post("/search")
 def semantic_search(
     payload: SearchRequest,
+    request: Request,
     db: Session = Depends(get_db),
 ):
-    results = search_documents(
+    result = search_documents(
         db=db,
         query=payload.query,
+        document_id=payload.document_id,
         top_k=payload.top_k,
     )
 
-    formatted_results = [
-        {
-            "document_id": result["document_id"],
-            "chunk_id": result["chunk_id"],
-            "score": result["score"],
-            "semantic_score": result["semantic_score"],
-            "keyword_score": result["keyword_score"],
-            "rerank_score": result["rerank_score"],
-        }
-        for result in results
-    ]
+    request_id = getattr(
+        request.state,
+        "request_id",
+        None,
+    )
 
-    return {"results": formatted_results}
+    return success_response(
+        data=result,
+        request_id=request_id,
+    )
