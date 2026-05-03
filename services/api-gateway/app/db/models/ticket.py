@@ -12,3 +12,5 @@ class Ticket(Base):
     ticket_text = Column(Text, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    category = Column(String, nullable=False, default="general")
+    priority = Column(String, nullable=False, default="low")

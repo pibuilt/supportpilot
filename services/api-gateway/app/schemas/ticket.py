@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional, List
+from typing import List
 
 
 # CREATE
@@ -11,6 +11,8 @@ class TicketCreateRequest(BaseModel):
 class TicketCreateResponse(BaseModel):
     ticket_id: str
     status: str
+    category: str
+    priority: str
     message: str
 
 
@@ -19,6 +21,8 @@ class TicketResponse(BaseModel):
     ticket_id: str
     ticket_text: str
     status: str
+    category: str
+    priority: str
     created_at: datetime
     updated_at: datetime
 
@@ -28,6 +32,8 @@ class TicketListItem(BaseModel):
     ticket_id: str
     ticket_text: str
     status: str
+    category: str
+    priority: str
     created_at: datetime
 
 

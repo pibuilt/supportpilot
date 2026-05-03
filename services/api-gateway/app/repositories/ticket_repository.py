@@ -6,10 +6,12 @@ class TicketRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def create_ticket(self, ticket_text: str, status: str):
+    def create_ticket(self, ticket_text: str, status: str, category: str, priority: str):
         ticket = Ticket(
             ticket_text=ticket_text,
-            status=status
+            status=status,
+            category=category,
+            priority=priority
         )
 
         self.db.add(ticket)

@@ -1,23 +1,28 @@
 from app.repositories.ticket_repository import TicketRepository
+from app.services.ticket_classifier import classify_ticket
+from app.services.ticket_priority import assign_ticket_priority
 
-
-# DAY 11
 def create_support_ticket(db, ticket_text: str):
     repository = TicketRepository(db)
 
+    category = classify_ticket(ticket_text)
+    priority = assign_ticket_priority(ticket_text)
+
     ticket = repository.create_ticket(
         ticket_text=ticket_text,
-        status="open"
+        status="open",
+        category=category,
+        priority=priority,
     )
 
     return {
         "ticket_id": ticket.id,
         "status": ticket.status,
+        "category": category,
+        "priority": priority,
         "message": "Support ticket created successfully"
     }
 
-
-# DAY 12
 def get_support_ticket(db, ticket_id: str):
     repository = TicketRepository(db)
 
@@ -30,6 +35,8 @@ def get_support_ticket(db, ticket_id: str):
         "ticket_id": ticket.id,
         "ticket_text": ticket.ticket_text,
         "status": ticket.status,
+        "category": ticket.category,
+        "priority": ticket.priority,
         "created_at": ticket.created_at,
         "updated_at": ticket.updated_at
     }
@@ -57,6 +64,8 @@ def list_support_tickets(
                 "ticket_id": ticket.id,
                 "ticket_text": ticket.ticket_text,
                 "status": ticket.status,
+                "category": ticket.category,
+                "priority": ticket.priority,
                 "created_at": ticket.created_at
             }
             for ticket in tickets
@@ -83,7 +92,9 @@ def search_support_tickets(
             {
                 "ticket_id": ticket.id,
                 "ticket_text": ticket.ticket_text,
-                "status": ticket.status
+                "status": ticket.status,
+                "category": ticket.category,
+                "priority": ticket.priority,
             }
             for ticket in tickets
         ]
