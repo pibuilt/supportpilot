@@ -9,7 +9,7 @@ from app.services.embedding_service import generate_embedding
 
 class IngestionService:
     EMBEDDING_DIMENSION = int(os.getenv("OLLAMA_EMBED_DIMENSION", "768"))
-    EMBEDDING_MODEL = os.getenv("OLLAMA_EMBED_MODEL", "nomic-embed-text")
+    EMBEDDING_MODEL = os.getenv("OLLAMA_EMBEDDING_MODEL", "nomic-embed-text")
     EMBEDDING_VERSION = os.getenv("OLLAMA_EMBED_VERSION", "v1")
 
     def __init__(self, db: Session):

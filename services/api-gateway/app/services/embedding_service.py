@@ -6,16 +6,16 @@ OLLAMA_URL = os.getenv(
     "OLLAMA_URL"
 )
 
-OLLAMA_MODEL = os.getenv(
-    "OLLAMA_MODEL"
+OLLAMA_EMBEDDING_MODEL = os.getenv(
+    "OLLAMA_EMBEDDING_MODEL"
 )
 
 
 def generate_embedding(text: str) -> list[float]:
     response = requests.post(
-        OLLAMA_URL,
+        f"{OLLAMA_URL}/api/embeddings",
         json={
-            "model": OLLAMA_MODEL,
+            "model": OLLAMA_EMBEDDING_MODEL,
             "prompt": text,
         },
         timeout=30,
