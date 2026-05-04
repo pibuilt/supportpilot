@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 
 from app.services.retrieval_service import search_documents
 from app.agents.specialist_agent import SpecialistAgent
-
+from app.utils.legal_output_parser import parse_legal_output
 
 class SpecialistService:
     def __init__(self):
@@ -36,4 +36,6 @@ class SpecialistService:
             query=query,
         )
 
-        return llm_output
+        parsed_output = parse_legal_output(llm_output)
+
+        return parsed_output

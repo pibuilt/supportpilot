@@ -28,7 +28,7 @@ def specialist_analysis(
     )
 
     return SpecialistResponse(
-        summary=result,
-        risks=result,
-        recommendations=result,
+        summary=result["summary"],
+        risks=result["risks"],
+        recommendations=result["recommendations"],
     )
