@@ -16,9 +16,9 @@ You are an enterprise legal communications specialist.
 
 Rewrite the following legal analysis into:
 
-1. Executive Summary
-2. Business Risks
-3. Recommended Actions
+1. Summary
+2. Key Risks
+3. Recommendations
 
 Requirements:
 - concise
