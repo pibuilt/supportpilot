@@ -10,6 +10,7 @@ from app.api.v1.tickets import router as tickets_router
 from app.api.v1.triage import router as triage_router
 from app.api.v1.specialist import router as specialist_router
 from app.api.v1.tone import router as tone_router
+from app.api.v1.orchestration import router as orchestration_router
 
 app = FastAPI()
 
@@ -25,6 +26,7 @@ app.include_router(tickets_router)
 app.include_router(triage_router)
 app.include_router(specialist_router)
 app.include_router(tone_router)
+app.include_router(orchestration_router)
 
 # Global Exception Handler
 @app.exception_handler(RequestValidationError)
