@@ -10,3 +10,9 @@ class ToneResponse(BaseModel):
     executive_summary: str
     business_risks: str
     recommended_actions: str
+
+
+class ToneOutput(BaseModel):
+    executive_summary: str
+    business_risks: str
+    recommended_actions: str

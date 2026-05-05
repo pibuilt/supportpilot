@@ -5,3 +5,8 @@ psycopg2-binary==2.9.9
 alembic==1.13.1
 pgvector==0.2.5
 requests==2.32.3
+langchain
+langchain-community
+langchain-core
+langchain-openai
+langchain-ollama

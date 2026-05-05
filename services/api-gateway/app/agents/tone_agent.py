@@ -1,41 +1,32 @@
-from app.services.llm_client import OllamaClient
+from langchain_core.output_parsers import PydanticOutputParser
+
+from app.prompts.tone_prompt import TONE_PROMPT
+from app.schemas.tone import ToneOutput
+from app.services.llm_factory import get_llm
 
 
 class ToneAgent:
     def __init__(self):
-        self.llm = OllamaClient()
+        self.llm = get_llm()
+        self.parser = PydanticOutputParser(
+            pydantic_object=ToneOutput
+        )
 
     def refine(
         self,
         summary: str,
         risks: str,
         recommendations: str,
-    ) -> str:
-        prompt = f"""
-You are an enterprise legal communications specialist.
+    ) -> dict:
+        prompt = TONE_PROMPT.format(
+            summary=summary,
+            risks=risks,
+            recommendations=recommendations,
+            format_instructions=self.parser.get_format_instructions(),
+        )
 
-Rewrite the following legal analysis into:
+        response = self.llm.invoke(prompt)
 
-1. Summary
-2. Key Risks
-3. Recommendations
+        parsed = self.parser.parse(response.content)
 
-Requirements:
-- concise
-- professional
-- boardroom-ready
-- customer-safe
-- avoid repetition
-- preserve legal meaning
-
-LEGAL SUMMARY:
-{summary}
-
-LEGAL RISKS:
-{risks}
-
-LEGAL RECOMMENDATIONS:
-{recommendations}
-"""
-
-        return self.llm.generate(prompt)
+        return parsed.model_dump()

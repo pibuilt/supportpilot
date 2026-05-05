@@ -2,7 +2,6 @@ from sqlalchemy.orm import Session
 
 from app.services.specialist_service import SpecialistService
 from app.agents.tone_agent import ToneAgent
-from app.utils.legal_output_parser import parse_legal_output
 
 
 class ToneService:
@@ -28,10 +27,8 @@ class ToneService:
             recommendations=specialist_output["recommendations"],
         )
 
-        parsed_tone_output = parse_legal_output(refined_output)
-
         return {
-            "executive_summary": parsed_tone_output["summary"],
-            "business_risks": parsed_tone_output["risks"],
-            "recommended_actions": parsed_tone_output["recommendations"],
+            "executive_summary": refined_output["executive_summary"],
+            "business_risks": refined_output["business_risks"],
+            "recommended_actions": refined_output["recommended_actions"],
         }
