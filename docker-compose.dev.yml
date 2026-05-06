@@ -2,25 +2,51 @@ services:
   api-gateway:
     build: .
     container_name: sp_api_gateway
+
     ports:
       - "8000:8000"
+
     env_file:
       - .env
+
     depends_on:
       - postgres
+      - llm-service
+
+    restart: unless-stopped
+
+  llm-service:
+    build:
+      context: .
+      dockerfile: services/llm-service/Dockerfile
+
+    container_name: sp_llm_service
+
+    ports:
+      - "8001:8000"
+
+    env_file:
+      - .env
+
     restart: unless-stopped
 
   postgres:
     image: pgvector/pgvector:pg16
+
     container_name: sp_postgres
+
     env_file:
       - .env
+
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
+
     ports:
       - "5432:5432"
+
     volumes:
       - ./docker/postgres/init:/docker-entrypoint-initdb.d
+
     restart: unless-stopped
