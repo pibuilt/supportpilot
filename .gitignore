@@ -3,3 +3,4 @@ ARCHITECTURE.md
 .env
 __pycache__/
 *.pyc
+structure.txt

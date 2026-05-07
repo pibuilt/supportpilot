@@ -1,29 +1,34 @@
 from fastapi import FastAPI
 
-from app.api.v1.generate import router as generate_router
-from app.api.v1.embeddings import router as embeddings_router
+from app.api.v1 import generate, embeddings
+from app.middleware.request_context import RequestContextMiddleware
+from app.core.logging import configure_logging
 
+
+configure_logging()
 
 app = FastAPI(
     title="SupportPilot LLM Service",
-    version="0.1.0"
+    version="1.0.0",
 )
+
+
+app.add_middleware(RequestContextMiddleware)
 
 
 @app.get("/health")
 async def health():
-    return {
-        "status": "healthy",
-        "service": "llm-service"
-    }
+    return {"status": "healthy"}
 
 
 app.include_router(
-    generate_router,
-    prefix="/v1"
+    generate.router,
+    prefix="/v1",
+    tags=["generation"],
 )
 
 app.include_router(
-    embeddings_router,
-    prefix="/v1"
+    embeddings.router,
+    prefix="/v1",
+    tags=["embeddings"],
 )

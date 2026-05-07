@@ -23,7 +23,7 @@ services:
     container_name: sp_llm_service
 
     ports:
-      - "8001:8000"
+      - "8001:8001"
 
     env_file:
       - .env

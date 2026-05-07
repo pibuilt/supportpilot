@@ -1,26 +1,18 @@
 from fastapi import APIRouter
-
 from app.schemas.embeddings import (
     EmbeddingRequest,
-    EmbeddingResponse
+    EmbeddingResponse,
 )
-
 from app.services.embedding_service import generate_embedding
 
 
 router = APIRouter()
 
 
-@router.post(
-    "/embeddings",
-    response_model=EmbeddingResponse
-)
-async def embeddings(payload: EmbeddingRequest):
-
+@router.post("/embed", response_model=EmbeddingResponse)
+async def embed(payload: EmbeddingRequest):
     embedding = await generate_embedding(
         text=payload.text,
-        provider=payload.provider,
-        model=payload.model
     )
 
     return EmbeddingResponse(embedding=embedding)

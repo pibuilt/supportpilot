@@ -1,14 +1,11 @@
 from pydantic import BaseModel
+from typing import Optional
 
 
 class GenerationRequest(BaseModel):
-    system_prompt: str
-    user_prompt: str
-
-    provider: str = "ollama"
-    model: str = "mistral"
-
-    temperature: float = 0.2
+    prompt: str
+    provider: Optional[str] = None
+    model: Optional[str] = None
 
 
 class GenerationResponse(BaseModel):

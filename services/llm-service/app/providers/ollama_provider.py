@@ -1,63 +1,45 @@
 import os
-
 import httpx
-
 from app.providers.base import BaseLLMProvider
 
 
 class OllamaProvider(BaseLLMProvider):
-
     def __init__(self):
-        self.base_url = os.environ["OLLAMA_URL"]
+        self.base_url = os.getenv("OLLAMA_URL", "http://host.docker.internal:11434")
+        self.default_model = os.getenv("OLLAMA_LLM_MODEL", "mistral")
+        self.embedding_model = os.getenv("OLLAMA_EMBEDDING_MODEL", "nomic-embed-text")
 
-    async def generate(
-        self,
-        system_prompt: str,
-        user_prompt: str,
-        model: str,
-        temperature: float = 0.2
-    ) -> str:
-
+    async def generate(self, prompt: str, model: str | None = None) -> str:
         payload = {
-            "model": model,
-            "prompt": f"{system_prompt}\n\n{user_prompt}",
+            "model": model or self.default_model,
+            "prompt": prompt,
             "stream": False,
-            "options": {
-                "temperature": temperature
-            }
         }
 
         async with httpx.AsyncClient(timeout=120.0) as client:
             response = await client.post(
                 f"{self.base_url}/api/generate",
-                json=payload
+                json=payload,
             )
 
-        response.raise_for_status()
+            response.raise_for_status()
+            data = response.json()
 
-        data = response.json()
+            return data.get("response", "")
 
-        return data["response"]
-
-    async def embed(
-        self,
-        text: str,
-        model: str
-    ) -> list[float]:
-
+    async def embed(self, text: str) -> list[float]:
         payload = {
-            "model": model,
-            "prompt": text
+            "model": self.embedding_model,
+            "prompt": text,
         }
 
         async with httpx.AsyncClient(timeout=120.0) as client:
             response = await client.post(
                 f"{self.base_url}/api/embeddings",
-                json=payload
+                json=payload,
             )
 
-        response.raise_for_status()
+            response.raise_for_status()
+            data = response.json()
 
-        data = response.json()
-
-        return data["embedding"]
+            return data.get("embedding", [])

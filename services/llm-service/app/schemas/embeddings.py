@@ -1,12 +1,10 @@
 from pydantic import BaseModel
+from typing import List
 
 
 class EmbeddingRequest(BaseModel):
     text: str
 
-    provider: str = "ollama"
-    model: str = "nomic-embed-text"
-
 
 class EmbeddingResponse(BaseModel):
-    embedding: list[float]
+    embedding: List[float]
