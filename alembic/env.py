@@ -1,3 +1,12 @@
+import sys
+import os
+
+sys.path.append(
+    os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "services", "api-gateway")
+    )
+)
+
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
@@ -11,6 +20,8 @@ from app.db.models.message import Message
 from app.db.models.embedding import Embedding
 from app.db.models.api_key import APIKey
 from app.db.models.usage_log import UsageLog
+
+
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

@@ -17,14 +17,26 @@ class SpecialistAgent:
         query: str,
         context: str,
     ) -> dict:
+        strict_format_instructions = (
+            self.parser.get_format_instructions()
+            + "\n\n"
+            + 'IMPORTANT: The "risks" field MUST be returned strictly as an array (JSON list) of concise strings. '
+              'Do NOT return risks as a single string, paragraph, or any other format.'
+        )
+
         prompt = SPECIALIST_PROMPT.format(
             context=context,
             query=query,
-            format_instructions=self.parser.get_format_instructions(),
+            format_instructions=strict_format_instructions,
         )
 
         response = self.llm.invoke(prompt)
 
-        parsed = self.parser.parse(response.content)
+        try:
+            parsed = self.parser.parse(response.content)
+        except Exception as e:
+            raise ValueError(
+                f"Specialist agent parsing failed. Raw output: {response.content}"
+            ) from e
 
         return parsed.model_dump()

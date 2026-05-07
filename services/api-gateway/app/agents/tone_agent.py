@@ -15,18 +15,30 @@ class ToneAgent:
     def refine(
         self,
         summary: str,
-        risks: str,
+        risks,
         recommendations: str,
     ) -> dict:
+        strict_format_instructions = (
+            self.parser.get_format_instructions()
+            + "\n\n"
+            + 'IMPORTANT: The "business_risks" field MUST be returned strictly as an array (JSON list) of concise strings. '
+              'Do NOT return business_risks as a paragraph or single string.'
+        )
+
         prompt = TONE_PROMPT.format(
             summary=summary,
             risks=risks,
             recommendations=recommendations,
-            format_instructions=self.parser.get_format_instructions(),
+            format_instructions=strict_format_instructions,
         )
 
         response = self.llm.invoke(prompt)
 
-        parsed = self.parser.parse(response.content)
+        try:
+            parsed = self.parser.parse(response.content)
+        except Exception as e:
+            raise ValueError(
+                f"Tone agent parsing failed. Raw output: {response.content}"
+            ) from e
 
         return parsed.model_dump()

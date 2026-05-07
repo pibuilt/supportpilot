@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import List
 
 
 class SpecialistRequest(BaseModel):
@@ -8,11 +9,11 @@ class SpecialistRequest(BaseModel):
 
 class SpecialistResponse(BaseModel):
     summary: str
-    risks: str
+    risks: List[str]
     recommendations: str
 
 
 class SpecialistOutput(BaseModel):
     summary: str
-    risks: str
+    risks: List[str]
     recommendations: str

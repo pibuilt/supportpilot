@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import List
 
 
 class ToneRequest(BaseModel):
@@ -8,11 +9,11 @@ class ToneRequest(BaseModel):
 
 class ToneResponse(BaseModel):
     executive_summary: str
-    business_risks: str
+    business_risks: List[str]
     recommended_actions: str
 
 
 class ToneOutput(BaseModel):
     executive_summary: str
-    business_risks: str
+    business_risks: List[str]
     recommended_actions: str
