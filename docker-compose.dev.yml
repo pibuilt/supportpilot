@@ -12,6 +12,22 @@ services:
     depends_on:
       - postgres
       - llm-service
+      - ai-service
+
+    restart: unless-stopped
+
+  ai-service:
+    build:
+      context: .
+      dockerfile: services/ai-service/Dockerfile
+
+    container_name: sp_ai_service
+
+    ports:
+      - "8002:8000"
+
+    env_file:
+      - .env
 
     restart: unless-stopped
 
