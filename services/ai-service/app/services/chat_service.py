@@ -1,3 +1,5 @@
+import asyncio
+import json
 import time
 import uuid
 
@@ -53,3 +55,45 @@ class ChatService:
                 total_tokens=0,
             ),
         )
+
+    async def stream_process(
+        self,
+        model: str,
+        messages: list,
+        temperature: float,
+        max_tokens: int,
+    ):
+        prompt = ""
+
+        for message in messages:
+            role = message.role.upper()
+            prompt += f"{role}: {message.content}\n"
+
+        result = await self.llm_client.generate(
+            prompt=prompt,
+        )
+
+        output_text = result["output"]
+
+        words = output_text.split()
+
+        for word in words:
+            chunk = {
+                "id": f"chatcmpl-{uuid.uuid4()}",
+                "object": "chat.completion.chunk",
+                "choices": [
+                    {
+                        "index": 0,
+                        "delta": {
+                            "content": word + " "
+                        },
+                        "finish_reason": None,
+                    }
+                ],
+            }
+
+            yield f"data: {json.dumps(chunk)}\n\n"
+
+            await asyncio.sleep(0.02)
+
+        yield "data: [DONE]\n\n"
