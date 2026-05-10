@@ -1,4 +1,3 @@
-import asyncio
 import json
 import time
 import uuid
@@ -69,15 +68,9 @@ class ChatService:
             role = message.role.upper()
             prompt += f"{role}: {message.content}\n"
 
-        result = await self.llm_client.generate(
+        async for token in self.llm_client.stream_generate(
             prompt=prompt,
-        )
-
-        output_text = result["output"]
-
-        words = output_text.split()
-
-        for word in words:
+        ):
             chunk = {
                 "id": f"chatcmpl-{uuid.uuid4()}",
                 "object": "chat.completion.chunk",
@@ -85,7 +78,7 @@ class ChatService:
                     {
                         "index": 0,
                         "delta": {
-                            "content": word + " "
+                            "content": token
                         },
                         "finish_reason": None,
                     }
@@ -93,7 +86,5 @@ class ChatService:
             }
 
             yield f"data: {json.dumps(chunk)}\n\n"
-
-            await asyncio.sleep(0.02)
 
         yield "data: [DONE]\n\n"

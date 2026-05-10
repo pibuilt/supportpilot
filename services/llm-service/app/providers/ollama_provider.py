@@ -1,4 +1,6 @@
+import json
 import os
+
 import httpx
 from app.providers.base import BaseLLMProvider
 
@@ -26,6 +28,36 @@ class OllamaProvider(BaseLLMProvider):
             data = response.json()
 
             return data.get("response", "")
+
+    async def stream_generate(
+        self,
+        prompt: str,
+        model: str | None = None,
+    ):
+        payload = {
+            "model": model or self.default_model,
+            "prompt": prompt,
+            "stream": True,
+        }
+
+        async with httpx.AsyncClient(timeout=None) as client:
+            async with client.stream(
+                "POST",
+                f"{self.base_url}/api/generate",
+                json=payload,
+            ) as response:
+                response.raise_for_status()
+
+                async for line in response.aiter_lines():
+                    if not line:
+                        continue
+
+                    data = json.loads(line)
+
+                    token = data.get("response", "")
+
+                    if token:
+                        yield token
 
     async def embed(self, text: str) -> list[float]:
         payload = {

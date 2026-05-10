@@ -18,3 +18,20 @@ class LLMClient:
             response.raise_for_status()
 
             return response.json()
+
+    async def stream_generate(self, prompt: str):
+        async with httpx.AsyncClient(timeout=None) as client:
+            async with client.stream(
+                "POST",
+                f"{self.BASE_URL}/v1/generate/stream",
+                json={
+                    "prompt": prompt,
+                    "max_tokens": 1000,
+                    "temperature": 0.2,
+                },
+            ) as response:
+                response.raise_for_status()
+
+                async for chunk in response.aiter_text():
+                    if chunk:
+                        yield chunk
