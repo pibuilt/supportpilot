@@ -31,5 +31,7 @@ class ToneOutput(SupportPilotBaseModel):
 class OrchestrationResponse(SupportPilotBaseModel):
     request_id: str
     triage: TriageOutput
+    tool_decision: Optional[Dict[str, Any]] = None
+    tool_output: Optional[Dict[str, Any]] = None
     specialist: SpecialistOutput
     tone: ToneOutput

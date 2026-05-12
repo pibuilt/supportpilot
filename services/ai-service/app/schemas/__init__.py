@@ -24,6 +24,8 @@ from app.schemas.triage import (
     TriageResponse,
 )
 
+from app.schemas.tool_call import ToolCall, ToolDecision
+
 __all__ = [
     "ChatMessage",
     "ChatCompletionRequest",
@@ -36,4 +38,6 @@ __all__ = [
     "SpecialistResponse",
     "ToneRequest",
     "ToneResponse",
+    "ToolCall",
+    "ToolDecision",
 ]

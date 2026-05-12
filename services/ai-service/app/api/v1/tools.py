@@ -13,5 +13,5 @@ service = ToolService()
 @router.get("")
 async def list_tools():
     return {
-        "tools": service.list_tools(),
+        "available_tools": service.list_tools()
     }

@@ -1,21 +1,24 @@
-from app.tools.base import BaseTool
+from langchain_core.tools import StructuredTool
+from pydantic import BaseModel
 
 
-class ClauseTool(BaseTool):
-    name = "clause_analysis"
-    description = "Analyze legal clauses for obligations, risks, indemnities, and terminations"
+class ClauseInput(BaseModel):
+    query: str
 
-    async def execute(
-        self,
-        clause_text: str,
-    ):
-        # Placeholder until deeper legal engine integration
-        return {
-            "clause_text": clause_text,
-            "analysis": {
-                "risks": [],
-                "obligations": [],
-                "recommendations": [],
-            },
-            "status": "clause_analysis_not_yet_fully_integrated",
-        }
+
+async def clause_analysis_function(
+    query: str,
+):
+    return {
+        "tool": "clause_analysis",
+        "input": query,
+        "analysis": f"Placeholder clause analysis for: {query}",
+    }
+
+
+clause_tool = StructuredTool.from_function(
+    coroutine=clause_analysis_function,
+    name="clause_analysis",
+    description="Analyze legal clauses for obligations, liabilities, and risks.",
+    args_schema=ClauseInput,
+)

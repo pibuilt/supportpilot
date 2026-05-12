@@ -17,7 +17,14 @@ class ToolService:
                 "error": f"Tool '{tool_name}' not found"
             }
 
-        return await tool.execute(**kwargs)
+        return await tool.ainvoke(kwargs)
 
-    def list_tools(self):
+    def list_tools(
+        self,
+    ):
         return self.registry.list_tools()
+
+    def get_all_tools(
+        self,
+    ):
+        return self.registry.get_all_tools()
