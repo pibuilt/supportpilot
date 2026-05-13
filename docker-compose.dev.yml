@@ -11,6 +11,7 @@ services:
 
     depends_on:
       - postgres
+      - redis
       - llm-service
       - ai-service
 
@@ -28,6 +29,9 @@ services:
 
     env_file:
       - .env
+
+    depends_on:
+      - redis
 
     restart: unless-stopped
 
@@ -64,5 +68,15 @@ services:
 
     volumes:
       - ./docker/postgres/init:/docker-entrypoint-initdb.d
+
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+
+    container_name: supportpilot-redis
+
+    ports:
+      - "6379:6379"
 
     restart: unless-stopped

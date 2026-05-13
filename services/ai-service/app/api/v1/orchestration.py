@@ -24,4 +24,5 @@ async def orchestrate(
     return await service.process(
         query=request.query,
         document_id=request.document_id,
+        session_id=request.session_id,
     )

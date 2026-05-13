@@ -1,9 +1,12 @@
-from typing import Any, Dict, Optional, TypedDict
+from typing import Any, Dict, Optional, TypedDict, List
 
 
 class OrchestrationState(TypedDict):
     query: str
     document_id: Optional[str]
+
+    session_id: str
+    conversation_history: List[Dict[str, str]]
 
     triage_result: Optional[Dict[str, Any]]
     tool_decision: Optional[Dict[str, Any]]

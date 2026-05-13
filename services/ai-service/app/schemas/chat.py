@@ -1,4 +1,4 @@
-from typing import List, Literal
+from typing import List, Literal, Optional
 
 from pydantic import BaseModel
 
@@ -11,6 +11,9 @@ class ChatMessage(BaseModel):
 class ChatCompletionRequest(BaseModel):
     model: str
     messages: List[ChatMessage]
+
+    session_id: Optional[str] = None
+
     temperature: float = 0.2
     max_tokens: int = 1000
 
@@ -37,5 +40,8 @@ class ChatCompletionResponse(BaseModel):
     object: str = "chat.completion"
     created: int
     model: str
+
+    session_id: Optional[str] = None
+
     choices: List[ChatCompletionChoice]
     usage: ChatCompletionUsage

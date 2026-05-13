@@ -8,6 +8,7 @@ from app.schemas.base import SupportPilotBaseModel
 class OrchestrationRequest(SupportPilotBaseModel):
     query: str = Field(..., min_length=3)
     document_id: Optional[str] = None
+    session_id: Optional[str] = None
     context_limit: int = Field(default=5, ge=1, le=20)
 
 
@@ -30,6 +31,8 @@ class ToneOutput(SupportPilotBaseModel):
 
 class OrchestrationResponse(SupportPilotBaseModel):
     request_id: str
+    session_id: str
+
     triage: TriageOutput
     tool_decision: Optional[Dict[str, Any]] = None
     tool_output: Optional[Dict[str, Any]] = None
