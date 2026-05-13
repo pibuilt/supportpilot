@@ -1,20 +1,11 @@
 import uuid
 
-from app.agents.specialist_agent import SpecialistAgent
-from app.agents.tone_agent import ToneAgent
-from app.agents.triage_agent import TriageAgent
-from app.services.tool_decision_service import ToolDecisionService
-from app.services.tool_service import ToolService
+from app.graph.workflow import build_orchestration_graph
 
 
 class OrchestrationService:
     def __init__(self):
-        self.triage_agent = TriageAgent()
-        self.specialist_agent = SpecialistAgent()
-        self.tone_agent = ToneAgent()
-
-        self.tool_decision_service = ToolDecisionService()
-        self.tool_service = ToolService()
+        self.graph = build_orchestration_graph()
 
     async def process(
         self,
@@ -23,54 +14,37 @@ class OrchestrationService:
     ):
         request_id = str(uuid.uuid4())
 
-        triage_result = await self.triage_agent.run(
-            {
-                "query": query,
-                "document_id": document_id,
-            }
-        )
-
-        tool_decision = await self.tool_decision_service.decide(
-            query=query,
-        )
-
-        tool_output = None
-
-        if (
-            tool_decision.get("use_tool")
-            and tool_decision.get("tool_call")
-        ):
-            tool_call = tool_decision["tool_call"]
-
-            tool_output = await self.tool_service.execute_tool(
-                tool_name=tool_call["tool_name"],
-                **tool_call["arguments"],
-            )
-
-        specialist_payload = {
+        initial_state = {
             "query": query,
             "document_id": document_id,
-            "triage_data": triage_result,
+            "request_id": request_id,
+
+            "triage_result": None,
+            "tool_decision": None,
+            "tool_output": None,
+            "specialist_result": None,
+            "tone_result": None,
         }
 
-        if tool_output:
-            specialist_payload["tool_output"] = tool_output
-
-        specialist_result = await self.specialist_agent.run(
-            specialist_payload
-        )
-
-        tone_result = await self.tone_agent.run(
-            {
-                "specialist_output": specialist_result,
-            }
+        final_state = await self.graph.ainvoke(
+            initial_state
         )
 
         return {
             "request_id": request_id,
-            "triage": triage_result,
-            "tool_decision": tool_decision,
-            "tool_output": tool_output,
-            "specialist": specialist_result,
-            "tone": tone_result,
+            "triage": final_state.get(
+                "triage_result"
+            ),
+            "tool_decision": final_state.get(
+                "tool_decision"
+            ),
+            "tool_output": final_state.get(
+                "tool_output"
+            ),
+            "specialist": final_state.get(
+                "specialist_result"
+            ),
+            "tone": final_state.get(
+                "tone_result"
+            ),
         }
