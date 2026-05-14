@@ -21,6 +21,7 @@ async def stream_chat_completions(
         messages=request.messages,
         temperature=request.temperature,
         max_tokens=request.max_tokens,
+        session_id=request.session_id,
     )
 
     return StreamingResponse(
