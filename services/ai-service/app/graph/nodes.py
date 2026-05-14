@@ -53,9 +53,23 @@ async def tool_execution_node(
     ):
         tool_call = tool_decision["tool_call"]
 
+        tool_name = tool_call["tool_name"]
+        tool_args = dict(
+            tool_call["arguments"]
+        )
+
+        # Enforce document-scoped retrieval
+        if (
+            tool_name == "retrieval"
+            and state.get("document_id")
+        ):
+            tool_args["document_id"] = state[
+                "document_id"
+            ]
+
         tool_output = await tool_service.execute_tool(
-            tool_name=tool_call["tool_name"],
-            **tool_call["arguments"],
+            tool_name=tool_name,
+            **tool_args,
         )
 
     state["tool_output"] = tool_output
@@ -72,7 +86,9 @@ async def specialist_node(
     }
 
     if state.get("tool_output"):
-        specialist_payload["tool_output"] = state["tool_output"]
+        specialist_payload["tool_output"] = state[
+            "tool_output"
+        ]
 
     specialist_result = await specialist_agent.run(
         specialist_payload
@@ -87,7 +103,9 @@ async def tone_node(
 ):
     tone_result = await tone_agent.run(
         {
-            "specialist_output": state["specialist_result"]
+            "specialist_output": state[
+                "specialist_result"
+            ]
         }
     )
 
