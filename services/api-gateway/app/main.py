@@ -34,16 +34,18 @@ from app.api.v1.orchestration import (
 )
 
 
-app = FastAPI()
+app = FastAPI(
+    title="SupportPilot API Gateway",
+)
 
 # Middleware
 app.add_middleware(
-    RequestContextMiddleware
+    RequestContextMiddleware,
 )
 
 # Routes
 app.include_router(
-    health_router
+    health_router,
 )
 
 app.include_router(
@@ -52,25 +54,25 @@ app.include_router(
 )
 
 app.include_router(
-    search_router
+    search_router,
 )
 
 app.include_router(
-    analysis_router
+    analysis_router,
 )
 
 app.include_router(
-    tickets_router
+    tickets_router,
 )
 
 app.include_router(
-    orchestration_router
+    orchestration_router,
 )
 
 
 # Global Exception Handler
 @app.exception_handler(
-    RequestValidationError
+    RequestValidationError,
 )
 async def validation_exception_handler(
     request: Request,

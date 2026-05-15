@@ -1,9 +1,11 @@
+import os
 import httpx
 
 
 class OrchestrationService:
-    AI_SERVICE_URL = (
-        "http://ai-service:8000/v1/orchestrate"
+    AI_SERVICE_URL = os.getenv(
+        "AI_SERVICE_URL",
+        "http://ai-service:8000/v1/orchestrate",
     )
 
     def process(
@@ -15,10 +17,14 @@ class OrchestrationService:
     ):
         payload = {
             "query": query,
-            "document_id": document_id,
-            "session_id": session_id,
             "context_limit": context_limit,
         }
+
+        if document_id:
+            payload["document_id"] = document_id
+
+        if session_id:
+            payload["session_id"] = session_id
 
         response = httpx.post(
             self.AI_SERVICE_URL,
