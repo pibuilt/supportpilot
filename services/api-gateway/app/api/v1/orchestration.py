@@ -1,12 +1,12 @@
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+from fastapi import APIRouter
 
-from app.db.session import get_db
 from app.schemas.orchestration import (
     OrchestrationRequest,
     OrchestrationResponse,
 )
-from app.services.orchestration_service import OrchestrationService
+from app.services.orchestration_service import (
+    OrchestrationService,
+)
 
 
 router = APIRouter(
@@ -23,10 +23,10 @@ service = OrchestrationService()
 )
 def orchestrate(
     request: OrchestrationRequest,
-    db: Session = Depends(get_db),
 ):
     return service.process(
-        db=db,
         document_id=request.document_id,
         query=request.query,
+        session_id=request.session_id,
+        context_limit=request.context_limit,
     )

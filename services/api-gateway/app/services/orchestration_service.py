@@ -1,38 +1,31 @@
-from sqlalchemy.orm import Session
-
-from app.services.triage_service import TriageService
-from app.services.specialist_service import SpecialistService
-from app.services.tone_service import ToneService
+import httpx
 
 
 class OrchestrationService:
-    def __init__(self):
-        self.triage_service = TriageService()
-        self.specialist_service = SpecialistService()
-        self.tone_service = ToneService()
+    AI_SERVICE_URL = (
+        "http://ai-service:8000/v1/orchestrate"
+    )
 
     def process(
         self,
-        db: Session,
-        document_id: str,
+        document_id: str | None,
         query: str,
+        session_id: str | None = None,
+        context_limit: int = 5,
     ):
-        triage_result = self.triage_service.process(query)
-
-        specialist_result = self.specialist_service.process(
-            db=db,
-            document_id=document_id,
-            query=query,
-        )
-
-        tone_result = self.tone_service.process(
-            db=db,
-            document_id=document_id,
-            query=query,
-        )
-
-        return {
-            "triage": triage_result,
-            "specialist": specialist_result,
-            "tone": tone_result,
+        payload = {
+            "query": query,
+            "document_id": document_id,
+            "session_id": session_id,
+            "context_limit": context_limit,
         }
+
+        response = httpx.post(
+            self.AI_SERVICE_URL,
+            json=payload,
+            timeout=120.0,
+        )
+
+        response.raise_for_status()
+
+        return response.json()
