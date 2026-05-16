@@ -33,6 +33,9 @@ from app.api.v1.orchestration import (
     router as orchestration_router,
 )
 
+from app.api.v1.api_keys import (
+    router as api_keys_router,
+)
 
 app = FastAPI(
     title="SupportPilot API Gateway",
@@ -69,6 +72,9 @@ app.include_router(
     orchestration_router,
 )
 
+app.include_router(
+    api_keys_router
+)
 
 # Global Exception Handler
 @app.exception_handler(
