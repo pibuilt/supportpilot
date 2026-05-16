@@ -1,5 +1,6 @@
 import json
 import os
+from urllib import response
 
 import httpx
 from app.providers.base import BaseLLMProvider
@@ -7,9 +8,9 @@ from app.providers.base import BaseLLMProvider
 
 class OllamaProvider(BaseLLMProvider):
     def __init__(self):
-        self.base_url = os.getenv("OLLAMA_URL", "http://host.docker.internal:11434")
-        self.default_model = os.getenv("OLLAMA_LLM_MODEL", "mistral")
-        self.embedding_model = os.getenv("OLLAMA_EMBEDDING_MODEL", "nomic-embed-text")
+        self.base_url = os.getenv("OLLAMA_URL", "http://172.17.0.1:11434")
+        self.default_model = os.getenv("OLLAMA_LLM_MODEL", "mistral:latest")
+        self.embedding_model = os.getenv("OLLAMA_EMBEDDING_MODEL", "nomic-embed-text:latest")
 
     async def generate(self, prompt: str, model: str | None = None) -> str:
         payload = {
@@ -24,7 +25,10 @@ class OllamaProvider(BaseLLMProvider):
                 json=payload,
             )
 
-            response.raise_for_status()
+            if response.status_code != 200:
+                raise Exception(
+                    f"Ollama Error {response.status_code}: {response.text}"
+                )
             data = response.json()
 
             return data.get("response", "")
@@ -46,7 +50,10 @@ class OllamaProvider(BaseLLMProvider):
                 f"{self.base_url}/api/generate",
                 json=payload,
             ) as response:
-                response.raise_for_status()
+                if response.status_code != 200:
+                    raise Exception(
+                        f"Ollama Error {response.status_code}: {response.text}"
+                    )
 
                 async for line in response.aiter_lines():
                     if not line:
@@ -71,7 +78,10 @@ class OllamaProvider(BaseLLMProvider):
                 json=payload,
             )
 
-            response.raise_for_status()
+            if response.status_code != 200:
+                raise Exception(
+                    f"Ollama Error {response.status_code}: {response.text}"
+                )
             data = response.json()
 
             return data.get("embedding", [])

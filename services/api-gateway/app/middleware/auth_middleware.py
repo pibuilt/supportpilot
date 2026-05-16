@@ -12,6 +12,9 @@ EXCLUDED_PATHS = {
     "/docs",
     "/openapi.json",
     "/v1/api-keys",
+    "/v1/auth/signup",
+    "/v1/auth/login",
+    "/v1/auth/me",
 }
 
 

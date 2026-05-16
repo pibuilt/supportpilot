@@ -47,6 +47,9 @@ from app.api.v1.api_keys import (
     router as api_keys_router,
 )
 
+from app.api.v1.auth import (
+    router as auth_router,
+)
 
 app = FastAPI(
     title="SupportPilot API Gateway",
@@ -89,6 +92,10 @@ app.include_router(
 
 app.include_router(
     api_keys_router,
+)
+
+app.include_router(
+    auth_router,
 )
 
 # Global Exception Handler
