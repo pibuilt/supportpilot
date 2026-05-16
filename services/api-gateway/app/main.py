@@ -10,9 +10,15 @@ from fastapi.exceptions import (
 from app.routes.health import (
     router as health_router,
 )
+
 from app.middleware.request_context import (
     RequestContextMiddleware,
 )
+
+from app.middleware.auth_middleware import (
+    AuthMiddleware,
+)
+
 from app.utils.response import (
     error_response,
 )
@@ -20,15 +26,19 @@ from app.utils.response import (
 from app.api.v1.ingestion import (
     router as ingestion_router,
 )
+
 from app.api.v1.search import (
     router as search_router,
 )
+
 from app.api.v1.analyze import (
     router as analysis_router,
 )
+
 from app.api.v1.tickets import (
     router as tickets_router,
 )
+
 from app.api.v1.orchestration import (
     router as orchestration_router,
 )
@@ -37,6 +47,7 @@ from app.api.v1.api_keys import (
     router as api_keys_router,
 )
 
+
 app = FastAPI(
     title="SupportPilot API Gateway",
 )
@@ -44,6 +55,10 @@ app = FastAPI(
 # Middleware
 app.add_middleware(
     RequestContextMiddleware,
+)
+
+app.add_middleware(
+    AuthMiddleware,
 )
 
 # Routes
@@ -73,7 +88,7 @@ app.include_router(
 )
 
 app.include_router(
-    api_keys_router
+    api_keys_router,
 )
 
 # Global Exception Handler
