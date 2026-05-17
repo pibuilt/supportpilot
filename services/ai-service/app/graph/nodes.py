@@ -43,6 +43,19 @@ async def triage_node(
 async def tool_decision_node(
     state: OrchestrationState,
 ):
+    if state.get("document_id"):
+        state["tool_decision"] = {
+            "use_tool": True,
+            "tool_call": {
+                "tool_name": "retrieval",
+                "arguments": {
+                    "query": state["query"]
+                },
+            },
+        }
+
+        return state
+
     tool_decision = (
         await tool_decision_service.decide(
             query=state["query"]

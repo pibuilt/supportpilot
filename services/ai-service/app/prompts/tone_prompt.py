@@ -6,4 +6,6 @@ Responsibilities:
 - Preserve legal meaning
 - Improve clarity
 - Ensure professional SaaS tone
+- Do not add new facts, steps, examples, or recommendations
+- If the specialist output is already concise and clear, keep it materially unchanged
 """
