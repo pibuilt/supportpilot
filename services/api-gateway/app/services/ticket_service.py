@@ -2,13 +2,21 @@ from app.repositories.ticket_repository import TicketRepository
 from app.services.ticket_classifier import classify_ticket
 from app.services.ticket_priority import assign_ticket_priority
 
-def create_support_ticket(db, ticket_text: str):
+
+def create_support_ticket(
+    db,
+    owner_id: str,
+    tenant_id: str,
+    ticket_text: str,
+):
     repository = TicketRepository(db)
 
     category = classify_ticket(ticket_text)
     priority = assign_ticket_priority(ticket_text)
 
     ticket = repository.create_ticket(
+        owner_id=owner_id,
+        tenant_id=tenant_id,
         ticket_text=ticket_text,
         status="open",
         category=category,
@@ -20,13 +28,23 @@ def create_support_ticket(db, ticket_text: str):
         "status": ticket.status,
         "category": category,
         "priority": priority,
-        "message": "Support ticket created successfully"
+        "message": "Support ticket created successfully",
     }
 
-def get_support_ticket(db, ticket_id: str):
+
+def get_support_ticket(
+    db,
+    owner_id: str,
+    tenant_id: str,
+    ticket_id: str,
+):
     repository = TicketRepository(db)
 
-    ticket = repository.get_ticket_by_id(ticket_id)
+    ticket = repository.get_ticket_by_id(
+        owner_id=owner_id,
+        tenant_id=tenant_id,
+        ticket_id=ticket_id,
+    )
 
     if not ticket:
         return None
@@ -38,22 +56,26 @@ def get_support_ticket(db, ticket_id: str):
         "category": ticket.category,
         "priority": ticket.priority,
         "created_at": ticket.created_at,
-        "updated_at": ticket.updated_at
+        "updated_at": ticket.updated_at,
     }
 
 
 def list_support_tickets(
     db,
+    owner_id: str,
+    tenant_id: str,
     status: str = None,
     limit: int = 20,
-    offset: int = 0
+    offset: int = 0,
 ):
     repository = TicketRepository(db)
 
     tickets, total = repository.list_tickets(
+        owner_id=owner_id,
+        tenant_id=tenant_id,
         status=status,
         limit=limit,
-        offset=offset
+        offset=offset,
     )
 
     return {
@@ -66,23 +88,27 @@ def list_support_tickets(
                 "status": ticket.status,
                 "category": ticket.category,
                 "priority": ticket.priority,
-                "created_at": ticket.created_at
+                "created_at": ticket.created_at,
             }
             for ticket in tickets
-        ]
+        ],
     }
 
 
 def search_support_tickets(
     db,
+    owner_id: str,
+    tenant_id: str,
     query_text: str,
-    limit: int = 5
+    limit: int = 5,
 ):
     repository = TicketRepository(db)
 
     tickets = repository.search_tickets(
+        owner_id=owner_id,
+        tenant_id=tenant_id,
         query_text=query_text,
-        limit=limit
+        limit=limit,
     )
 
     return {
@@ -97,5 +123,5 @@ def search_support_tickets(
                 "priority": ticket.priority,
             }
             for ticket in tickets
-        ]
+        ],
     }

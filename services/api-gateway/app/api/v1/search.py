@@ -18,8 +18,13 @@ def semantic_search(
     request: Request,
     db: Session = Depends(get_db),
 ):
+    owner_id = getattr(request.state, "owner", None)
+    tenant_id = getattr(request.state, "tenant_id", None)
+
     result = search_documents(
         db=db,
+        owner_id=owner_id,
+        tenant_id=tenant_id,
         query=payload.query,
         document_id=payload.document_id,
         top_k=payload.top_k,

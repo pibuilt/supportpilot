@@ -7,9 +7,28 @@ class EmbeddingRepository:
     def __init__(self, db: Session):
         self.db = db
 
+    def document_exists_for_owner(
+        self,
+        owner_id: str,
+        tenant_id: str,
+        document_id: str,
+    ) -> bool:
+        return (
+            self.db.query(Embedding.id)
+            .filter(
+                Embedding.owner_id == owner_id,
+                Embedding.tenant_id == tenant_id,
+                Embedding.document_id == document_id,
+            )
+            .first()
+            is not None
+        )
+
     def create_embedding(
         self,
         embedding_id: str,
+        owner_id: str,
+        tenant_id: str,
         document_id: str,
         chunk_id: str,
         chunk_text: str,
@@ -19,6 +38,8 @@ class EmbeddingRepository:
     ) -> Embedding:
         embedding = Embedding(
             id=embedding_id,
+            owner_id=owner_id,
+            tenant_id=tenant_id,
             document_id=document_id,
             chunk_id=chunk_id,
             chunk_text=chunk_text,
@@ -34,6 +55,8 @@ class EmbeddingRepository:
     def search_similar_embeddings(
         self,
         query_vector: list[float],
+        owner_id: str,
+        tenant_id: str,
         limit: int = 5,
         document_id: str | None = None,
     ):
@@ -42,6 +65,9 @@ class EmbeddingRepository:
             Embedding.chunk_id,
             Embedding.chunk_text,
             Embedding.embedding.cosine_distance(query_vector).label("distance"),
+        ).filter(
+            Embedding.owner_id == owner_id,
+            Embedding.tenant_id == tenant_id,
         )
 
         if document_id:

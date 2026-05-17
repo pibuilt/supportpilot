@@ -7,6 +7,8 @@ class ClauseAnalysisRepository:
     @staticmethod
     def save_clause_analyses(
         db: Session,
+        owner_id: str,
+        tenant_id: str,
         document_id: str,
         chunk_id: str,
         findings: list,
@@ -15,6 +17,8 @@ class ClauseAnalysisRepository:
 
         for finding in findings:
             record = ClauseAnalysis(
+                owner_id=owner_id,
+                tenant_id=tenant_id,
                 document_id=document_id,
                 chunk_id=chunk_id,
                 clause_type=finding["clause_type"],

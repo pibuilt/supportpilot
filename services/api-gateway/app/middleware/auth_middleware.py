@@ -52,6 +52,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
                 )
 
             request.state.owner = result["owner"]
+            request.state.user_id = result["owner"]
             request.state.role = result["role"]
             request.state.tenant_id = result["tenant_id"]
 

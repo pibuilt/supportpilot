@@ -9,7 +9,7 @@ from app.providers.base import BaseLLMProvider
 class OllamaProvider(BaseLLMProvider):
     def __init__(self):
         self.base_url = os.getenv("OLLAMA_URL", "http://172.17.0.1:11434")
-        self.default_model = os.getenv("OLLAMA_LLM_MODEL", "mistral:latest")
+        self.default_model = os.getenv("OLLAMA_LLM_MODEL", "qwen2.5:1.5b")
         self.embedding_model = os.getenv("OLLAMA_EMBEDDING_MODEL", "nomic-embed-text:latest")
 
     async def generate(self, prompt: str, model: str | None = None) -> str:

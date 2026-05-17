@@ -8,6 +8,10 @@ class Embedding(Base):
     __tablename__ = "embeddings"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+
+    owner_id = Column(String, nullable=False, index=True, default="system")
+    tenant_id = Column(String, nullable=False, index=True, default="system")
+
     document_id = Column(String, nullable=False)
     chunk_id = Column(String, nullable=False)
 

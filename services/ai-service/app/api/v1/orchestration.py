@@ -4,7 +4,9 @@ from app.schemas.orchestration import (
     OrchestrationRequest,
     OrchestrationResponse,
 )
-from app.services.orchestration_service import OrchestrationService
+from app.services.orchestration_service import (
+    OrchestrationService,
+)
 
 router = APIRouter(
     prefix="/v1/orchestrate",
@@ -22,6 +24,9 @@ async def orchestrate(
     request: OrchestrationRequest,
 ):
     return await service.process(
+        owner_id=request.owner_id,
+        tenant_id=request.tenant_id,
+        api_key=request.api_key,
         query=request.query,
         document_id=request.document_id,
         session_id=request.session_id,

@@ -6,6 +6,7 @@ from app.repositories.clause_analysis_repository import (
     ClauseAnalysisRepository,
 )
 
+
 def deduplicate_findings(findings):
     seen = set()
     unique = []
@@ -21,6 +22,7 @@ def deduplicate_findings(findings):
             unique.append(finding)
 
     return unique
+
 
 def generate_executive_summary(findings):
     high_risk = sum(
@@ -56,10 +58,20 @@ def generate_executive_summary(findings):
         "critical_clauses": list(set(critical_clauses)),
     }
 
-def analyze_contract(document_id: str, db: Session):
+
+def analyze_contract(
+    owner_id: str,
+    tenant_id: str,
+    document_id: str,
+    db: Session,
+):
     chunks = (
         db.query(Embedding)
-        .filter(Embedding.document_id == document_id)
+        .filter(
+            Embedding.document_id == document_id,
+            Embedding.owner_id == owner_id,
+            Embedding.tenant_id == tenant_id,
+        )
         .all()
     )
 
@@ -73,6 +85,8 @@ def analyze_contract(document_id: str, db: Session):
             if findings:
                 ClauseAnalysisRepository.save_clause_analyses(
                     db=db,
+                    owner_id=owner_id,
+                    tenant_id=tenant_id,
                     document_id=document_id,
                     chunk_id=chunk.chunk_id,
                     findings=findings,
@@ -102,6 +116,8 @@ def analyze_contract(document_id: str, db: Session):
     )
 
     return {
+        "owner_id": owner_id,
+        "tenant_id": tenant_id,
         "document_id": document_id,
         "clauses": deduplicated_findings,
         "summary": {

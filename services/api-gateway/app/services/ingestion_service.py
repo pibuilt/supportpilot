@@ -16,7 +16,22 @@ class IngestionService:
         self.db = db
         self.embedding_repo = EmbeddingRepository(db)
 
-    def ingest_document(self, document_id: str, text: str):
+    def ingest_document(
+        self,
+        owner_id: str,
+        tenant_id: str,
+        document_id: str,
+        text: str,
+    ):
+        if self.embedding_repo.document_exists_for_owner(
+            owner_id=owner_id,
+            tenant_id=tenant_id,
+            document_id=document_id,
+        ):
+            raise ValueError(
+                "Document already exists for this user"
+            )
+
         chunks = chunk_text(text)
 
         created_records = []
@@ -28,6 +43,8 @@ class IngestionService:
 
                 self.embedding_repo.create_embedding(
                     embedding_id=embedding_id,
+                    owner_id=owner_id,
+                    tenant_id=tenant_id,
                     document_id=document_id,
                     chunk_id=chunk_id,
                     chunk_text=chunk,
@@ -51,6 +68,8 @@ class IngestionService:
             raise
 
         return {
+            "owner_id": owner_id,
+            "tenant_id": tenant_id,
             "document_id": document_id,
             "chunks_created": len(created_records),
             "records": created_records,

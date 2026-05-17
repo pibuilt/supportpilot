@@ -7,6 +7,8 @@ from app.services.reranking_service import rerank_results
 
 def search_documents(
     db: Session,
+    owner_id: str,
+    tenant_id: str,
     query: str,
     document_id: str | None = None,
     top_k: int = 5,
@@ -19,6 +21,8 @@ def search_documents(
 
     semantic_results = repository.search_similar_embeddings(
         query_vector=query_vector,
+        owner_id=owner_id,
+        tenant_id=tenant_id,
         limit=candidate_k,
         document_id=document_id,
     )
@@ -31,6 +35,8 @@ def search_documents(
     final_results = reranked_results[:top_k]
 
     return {
+        "owner_id": owner_id,
+        "tenant_id": tenant_id,
         "query": query,
         "results": final_results,
         "summary": {

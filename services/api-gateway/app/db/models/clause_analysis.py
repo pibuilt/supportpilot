@@ -6,6 +6,10 @@ class ClauseAnalysis(Base):
     __tablename__ = "clause_analyses"
 
     id = Column(Integer, primary_key=True, index=True)
+
+    owner_id = Column(String, nullable=False, index=True, default="system")
+    tenant_id = Column(String, nullable=False, index=True, default="system")
+
     document_id = Column(String, nullable=False, index=True)
     chunk_id = Column(String, nullable=False, index=True)
 
