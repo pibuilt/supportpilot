@@ -1,24 +1,38 @@
 import uuid
-from datetime import datetime
+from datetime import (
+    datetime,
+)
 
-from sqlalchemy import Boolean, Column, DateTime, String
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    String,
+)
 
 from app.db.base import Base
 
 
-class User(Base):
-    __tablename__ = "users"
+class User(
+    Base
+):
+    __tablename__ = (
+        "users"
+    )
 
     id = Column(
         String,
         primary_key=True,
-        default=lambda: str(uuid.uuid4()),
+        default=lambda: str(
+            uuid.uuid4()
+        ),
     )
 
     email = Column(
         String,
         unique=True,
         nullable=False,
+        index=True,
     )
 
     hashed_password = Column(
@@ -41,6 +55,7 @@ class User(Base):
         String,
         nullable=False,
         default="default",
+        index=True,
     )
 
     is_active = Column(

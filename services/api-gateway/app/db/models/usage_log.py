@@ -1,17 +1,31 @@
 import uuid
-from datetime import datetime
+from datetime import (
+    datetime,
+)
 
-from sqlalchemy import Column, DateTime, Integer, String
+from sqlalchemy import (
+    Column,
+    DateTime,
+    Integer,
+    String,
+)
+
 from app.db.base import Base
 
 
-class UsageLog(Base):
-    __tablename__ = "usage_logs"
+class UsageLog(
+    Base
+):
+    __tablename__ = (
+        "usage_logs"
+    )
 
     id = Column(
         String,
         primary_key=True,
-        default=lambda: str(uuid.uuid4()),
+        default=lambda: str(
+            uuid.uuid4()
+        ),
     )
 
     api_key_id = Column(
@@ -30,15 +44,16 @@ class UsageLog(Base):
         nullable=False,
     )
 
-    tokens_used = Column(
-        Integer,
-        nullable=False,
-    )
-
     status_code = Column(
         Integer,
         nullable=False,
         default=200,
+    )
+
+    tokens_used = Column(
+        Integer,
+        nullable=False,
+        default=0,
     )
 
     created_at = Column(

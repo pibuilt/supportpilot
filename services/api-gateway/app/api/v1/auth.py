@@ -4,14 +4,18 @@ from fastapi import (
     Header,
     HTTPException,
 )
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import (
+    Session,
+)
 
-from app.db.session import get_db
+from app.db.session import (
+    get_db,
+)
 from app.schemas.auth import (
-    UserSignupRequest,
-    UserLoginRequest,
     AuthTokenResponse,
     CurrentUserResponse,
+    UserLoginRequest,
+    UserSignupRequest,
 )
 from app.services.user_auth_service import (
     UserAuthService,
@@ -33,9 +37,13 @@ router = APIRouter(
 )
 def signup(
     request: UserSignupRequest,
-    db: Session = Depends(get_db),
+    db: Session = Depends(
+        get_db
+    ),
 ):
-    service = UserAuthService(db)
+    service = UserAuthService(
+        db
+    )
 
     try:
         return service.signup(
@@ -43,7 +51,7 @@ def signup(
             password=request.password,
             full_name=request.full_name,
             tenant_id=request.tenant_id,
-            role=request.role,
+            role=request.role.value,
         )
 
     except ValueError as e:
@@ -59,9 +67,13 @@ def signup(
 )
 def login(
     request: UserLoginRequest,
-    db: Session = Depends(get_db),
+    db: Session = Depends(
+        get_db
+    ),
 ):
-    service = UserAuthService(db)
+    service = UserAuthService(
+        db
+    )
 
     try:
         return service.login(
@@ -81,8 +93,12 @@ def login(
     response_model=CurrentUserResponse,
 )
 def get_current_user(
-    authorization: str = Header(...),
-    db: Session = Depends(get_db),
+    authorization: str = Header(
+        ...
+    ),
+    db: Session = Depends(
+        get_db
+    ),
 ):
     if not authorization.startswith(
         "Bearer "
@@ -107,7 +123,9 @@ def get_current_user(
             detail="Invalid or expired token",
         )
 
-    service = UserAuthService(db)
+    service = UserAuthService(
+        db
+    )
 
     user = service.get_current_user(
         payload["sub"]

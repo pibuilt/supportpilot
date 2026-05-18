@@ -1,15 +1,20 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import (
+    Session,
+)
 
-from app.db.models.user import User
-from app.db.models.api_key import APIKey
-
+from app.db.models.api_key import (
+    APIKey,
+)
+from app.db.models.user import (
+    User,
+)
 from app.utils.security import (
-    hash_password,
-    verify_password,
     create_access_token,
     generate_api_key,
-    hash_api_key,
     get_key_prefix,
+    hash_api_key,
+    hash_password,
+    verify_password,
 )
 
 
@@ -22,16 +27,29 @@ class UserAuthService:
 
     def _create_user_api_key(
         self,
+        user_id: str,
         full_name: str,
         role: str,
         tenant_id: str,
     ):
-        raw_key = generate_api_key()
+        raw_key = (
+            generate_api_key()
+        )
 
         db_key = APIKey(
-            key_prefix=get_key_prefix(raw_key),
-            hashed_key=hash_api_key(raw_key),
+            key_prefix=get_key_prefix(
+                raw_key
+            ),
+            hashed_key=hash_api_key(
+                raw_key
+            ),
+
+            # Legacy compatibility
             owner=full_name,
+
+            # Stable identity
+            user_id=user_id,
+
             role=role,
             tenant_id=tenant_id,
             is_active=True,
@@ -43,7 +61,9 @@ class UserAuthService:
 
         return {
             "api_key": raw_key,
-            "key_prefix": db_key.key_prefix,
+            "key_prefix": (
+                db_key.key_prefix
+            ),
         }
 
     def signup(
@@ -57,7 +77,8 @@ class UserAuthService:
         existing_user = (
             self.db.query(User)
             .filter(
-                User.email == email
+                User.email
+                == email
             )
             .first()
         )
@@ -67,9 +88,37 @@ class UserAuthService:
                 "User already exists"
             )
 
+        existing_admin = (
+            self.db.query(User)
+            .filter(
+                User.role.in_(
+                    [
+                        "admin",
+                        "root_admin",
+                    ]
+                )
+            )
+            .count()
+        )
+
+        # Bootstrap first-ever platform admin
+        if existing_admin == 0:
+            role = "root_admin"
+
+        # Block unauthorized admin creation after bootstrap
+        elif role in [
+            "admin",
+            "root_admin",
+        ]:
+            raise ValueError(
+                "Only existing admins can create admin users"
+            )
+
         user = User(
             email=email,
-            hashed_password=hash_password(password),
+            hashed_password=hash_password(
+                password
+            ),
             full_name=full_name,
             tenant_id=tenant_id,
             role=role,
@@ -80,10 +129,13 @@ class UserAuthService:
         self.db.commit()
         self.db.refresh(user)
 
-        api_key_data = self._create_user_api_key(
-            full_name=full_name,
-            role=role,
-            tenant_id=tenant_id,
+        api_key_data = (
+            self._create_user_api_key(
+                user_id=user.id,
+                full_name=user.full_name,
+                role=user.role,
+                tenant_id=user.tenant_id,
+            )
         )
 
         token = create_access_token(
@@ -95,8 +147,12 @@ class UserAuthService:
 
         return {
             "access_token": token,
-            "api_key": api_key_data["api_key"],
-            "key_prefix": api_key_data["key_prefix"],
+            "api_key": api_key_data[
+                "api_key"
+            ],
+            "key_prefix": api_key_data[
+                "key_prefix"
+            ],
             "user_id": user.id,
             "email": user.email,
             "full_name": user.full_name,
@@ -112,8 +168,10 @@ class UserAuthService:
         user = (
             self.db.query(User)
             .filter(
-                User.email == email,
-                User.is_active == True,
+                User.email
+                == email,
+                User.is_active
+                == True,
             )
             .first()
         )
@@ -134,26 +192,30 @@ class UserAuthService:
         existing_key = (
             self.db.query(APIKey)
             .filter(
-                APIKey.owner == user.full_name,
-                APIKey.tenant_id == user.tenant_id,
-                APIKey.is_active == True,
+                APIKey.user_id
+                == user.id,
+                APIKey.tenant_id
+                == user.tenant_id,
+                APIKey.is_active
+                == True,
             )
             .first()
         )
 
-        api_key_data = None
-
-        if existing_key:
+        if not existing_key:
+            api_key_data = (
+                self._create_user_api_key(
+                    user_id=user.id,
+                    full_name=user.full_name,
+                    role=user.role,
+                    tenant_id=user.tenant_id,
+                )
+            )
+        else:
             api_key_data = {
                 "api_key": "Use existing key securely stored",
                 "key_prefix": existing_key.key_prefix,
             }
-        else:
-            api_key_data = self._create_user_api_key(
-                full_name=user.full_name,
-                role=user.role,
-                tenant_id=user.tenant_id,
-            )
 
         token = create_access_token(
             user_id=user.id,
@@ -164,8 +226,12 @@ class UserAuthService:
 
         return {
             "access_token": token,
-            "api_key": api_key_data["api_key"],
-            "key_prefix": api_key_data["key_prefix"],
+            "api_key": api_key_data[
+                "api_key"
+            ],
+            "key_prefix": api_key_data[
+                "key_prefix"
+            ],
             "user_id": user.id,
             "email": user.email,
             "full_name": user.full_name,
@@ -180,8 +246,10 @@ class UserAuthService:
         user = (
             self.db.query(User)
             .filter(
-                User.id == user_id,
-                User.is_active == True,
+                User.id
+                == user_id,
+                User.is_active
+                == True,
             )
             .first()
         )

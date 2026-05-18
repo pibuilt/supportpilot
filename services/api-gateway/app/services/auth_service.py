@@ -1,57 +1,40 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import (
+    Session,
+)
 
-from app.db.models.api_key import APIKey
+from app.db.models.api_key import (
+    APIKey,
+)
+from app.db.models.usage_log import (
+    UsageLog,
+)
 from app.utils.security import (
-    generate_api_key,
     hash_api_key,
-    get_key_prefix,
 )
 
 
 class AuthService:
-    def __init__(self, db: Session):
-        self.db = db
-
-    def create_api_key(
+    def __init__(
         self,
-        owner: str,
-        role: str,
-        tenant_id: str,
+        db: Session,
     ):
-        raw_key = generate_api_key()
-
-        db_key = APIKey(
-            key_prefix=get_key_prefix(raw_key),
-            hashed_key=hash_api_key(raw_key),
-            owner=owner,
-            role=role,
-            tenant_id=tenant_id,
-            is_active=True,
-        )
-
-        self.db.add(db_key)
-        self.db.commit()
-        self.db.refresh(db_key)
-
-        return {
-            "api_key": raw_key,
-            "key_prefix": db_key.key_prefix,
-            "owner": db_key.owner,
-            "role": db_key.role,
-            "tenant_id": db_key.tenant_id,
-        }
+        self.db = db
 
     def validate_api_key(
         self,
         api_key: str,
     ):
-        hashed = hash_api_key(api_key)
+        hashed = hash_api_key(
+            api_key
+        )
 
         key = (
             self.db.query(APIKey)
             .filter(
-                APIKey.hashed_key == hashed,
-                APIKey.is_active == True,
+                APIKey.hashed_key
+                == hashed,
+                APIKey.is_active
+                == True,
             )
             .first()
         )
@@ -63,7 +46,35 @@ class AuthService:
 
         return {
             "valid": True,
+
+            # Legacy compatibility
             "owner": key.owner,
+
+            # Stable identity
+            "user_id": key.user_id,
+
             "role": key.role,
-            "tenant_id": key.tenant_id,
+            "tenant_id": (
+                key.tenant_id
+            ),
+            "api_key_id": key.id,
         }
+
+    def log_usage(
+        self,
+        api_key_id: str,
+        tenant_id: str,
+        endpoint: str,
+        status_code: int,
+        tokens_used: int = 0,
+    ):
+        usage = UsageLog(
+            api_key_id=api_key_id,
+            tenant_id=tenant_id,
+            endpoint=endpoint,
+            status_code=status_code,
+            tokens_used=tokens_used,
+        )
+
+        self.db.add(usage)
+        self.db.commit()

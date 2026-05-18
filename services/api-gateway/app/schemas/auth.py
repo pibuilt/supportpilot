@@ -1,22 +1,47 @@
-from pydantic import BaseModel, EmailStr
+from enum import Enum
+
+from pydantic import (
+    BaseModel,
+    EmailStr,
+)
 
 
-class UserSignupRequest(BaseModel):
+class UserRole(
+    str,
+    Enum,
+):
+    USER = "user"
+    ADMIN = "admin"
+    ROOT_ADMIN = "root_admin"
+
+
+class UserSignupRequest(
+    BaseModel
+):
     email: EmailStr
     password: str
     full_name: str
     tenant_id: str
-    role: str = "user"
+
+    role: UserRole = (
+        UserRole.USER
+    )
 
 
-class UserLoginRequest(BaseModel):
+class UserLoginRequest(
+    BaseModel
+):
     email: EmailStr
     password: str
 
 
-class AuthTokenResponse(BaseModel):
+class AuthTokenResponse(
+    BaseModel
+):
     access_token: str
-    token_type: str = "bearer"
+    token_type: str = (
+        "bearer"
+    )
 
     api_key: str
     key_prefix: str
@@ -24,14 +49,19 @@ class AuthTokenResponse(BaseModel):
     user_id: str
     email: str
     full_name: str
-    role: str
+
+    role: UserRole
     tenant_id: str
 
 
-class CurrentUserResponse(BaseModel):
+class CurrentUserResponse(
+    BaseModel
+):
     user_id: str
     email: str
     full_name: str
-    role: str
+
+    role: UserRole
     tenant_id: str
+
     is_active: bool

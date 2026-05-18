@@ -1,17 +1,31 @@
 import uuid
-from datetime import datetime
+from datetime import (
+    datetime,
+)
 
-from sqlalchemy import Boolean, Column, DateTime, String
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    String,
+)
+
 from app.db.base import Base
 
 
-class APIKey(Base):
-    __tablename__ = "api_keys"
+class APIKey(
+    Base
+):
+    __tablename__ = (
+        "api_keys"
+    )
 
     id = Column(
         String,
         primary_key=True,
-        default=lambda: str(uuid.uuid4()),
+        default=lambda: str(
+            uuid.uuid4()
+        ),
     )
 
     key_prefix = Column(
@@ -24,15 +38,24 @@ class APIKey(Base):
         nullable=False,
     )
 
+    # Legacy compatibility
     owner = Column(
         String,
         nullable=False,
+        index=True,
+    )
+
+    # Stable identity
+    user_id = Column(
+        String,
+        nullable=False,
+        index=True,
     )
 
     role = Column(
         String,
         nullable=False,
-        default="enterprise",
+        default="user",
     )
 
     tenant_id = Column(

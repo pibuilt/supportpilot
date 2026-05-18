@@ -23,6 +23,8 @@ class OrchestrationService:
         payload = {
             "owner_id": owner_id,
             "tenant_id": tenant_id,
+
+            # REQUIRED by AI schema
             "api_key": api_key,
 
             "query": query,
@@ -42,6 +44,12 @@ class OrchestrationService:
         response = httpx.post(
             self.AI_SERVICE_URL,
             json=payload,
+
+            # REQUIRED by middleware
+            headers={
+                "x-api-key": api_key
+            },
+
             timeout=120.0,
         )
 

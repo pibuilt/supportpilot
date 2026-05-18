@@ -1,45 +1,63 @@
 import hashlib
+import os
 import secrets
-from datetime import datetime, timedelta
+from datetime import (
+    datetime,
+    timedelta,
+)
 
 import jwt
-from passlib.context import CryptContext
+from passlib.context import (
+    CryptContext,
+)
 
 
-# Password hashing
 pwd_context = CryptContext(
     schemes=["bcrypt"],
     deprecated="auto",
 )
 
-# JWT config
-JWT_SECRET_KEY = secrets.token_urlsafe(64)
+
+JWT_SECRET_KEY = os.getenv(
+    "JWT_SECRET_KEY",
+)
+
+if not JWT_SECRET_KEY:
+    raise RuntimeError(
+        "JWT_SECRET_KEY must be set in environment"
+    )
+
+
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRATION_HOURS = 24
 
 
-# -------------------------
-# API KEY SECURITY
-# -------------------------
 def generate_api_key() -> str:
-    return f"sp_{secrets.token_urlsafe(32)}"
+    return (
+        f"sp_{secrets.token_urlsafe(32)}"
+    )
 
 
-def hash_api_key(api_key: str) -> str:
+def hash_api_key(
+    api_key: str,
+) -> str:
     return hashlib.sha256(
         api_key.encode()
     ).hexdigest()
 
 
-def get_key_prefix(api_key: str) -> str:
+def get_key_prefix(
+    api_key: str,
+) -> str:
     return api_key[:12]
 
 
-# -------------------------
-# PASSWORD SECURITY
-# -------------------------
-def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+def hash_password(
+    password: str,
+) -> str:
+    return pwd_context.hash(
+        password
+    )
 
 
 def verify_password(
@@ -52,9 +70,6 @@ def verify_password(
     )
 
 
-# -------------------------
-# JWT SECURITY
-# -------------------------
 def create_access_token(
     user_id: str,
     email: str,
@@ -67,7 +82,9 @@ def create_access_token(
         "role": role,
         "tenant_id": tenant_id,
         "exp": datetime.utcnow()
-        + timedelta(hours=JWT_EXPIRATION_HOURS),
+        + timedelta(
+            hours=JWT_EXPIRATION_HOURS
+        ),
     }
 
     return jwt.encode(
@@ -84,7 +101,9 @@ def verify_access_token(
         payload = jwt.decode(
             token,
             JWT_SECRET_KEY,
-            algorithms=[JWT_ALGORITHM],
+            algorithms=[
+                JWT_ALGORITHM
+            ],
         )
 
         return payload
