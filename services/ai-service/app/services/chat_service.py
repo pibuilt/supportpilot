@@ -2,35 +2,62 @@ import json
 import time
 import uuid
 
-from app.graph.checkpoint import GraphCheckpointService
+from app.graph.checkpoint import (
+    GraphCheckpointService,
+)
 from app.schemas.chat import (
     ChatCompletionChoice,
     ChatCompletionChoiceMessage,
     ChatCompletionResponse,
     ChatCompletionUsage,
 )
-from app.services.llm_client import LLMClient
-from app.services.memory_service import MemoryService
+from app.services.llm_client import (
+    LLMClient,
+)
+from app.services.memory_service import (
+    MemoryService,
+)
 
 
 class ChatService:
     def __init__(self):
-        self.llm_client = LLMClient()
-        self.memory_service = MemoryService()
-        self.checkpoint_service = GraphCheckpointService()
+        self.llm_client = (
+            LLMClient()
+        )
+
+        self.memory_service = (
+            MemoryService()
+        )
+
+        self.checkpoint_service = (
+            GraphCheckpointService()
+        )
 
     async def process(
         self,
+        owner_id: str,
+        tenant_id: str,
+        api_key: str,
+
         model: str,
         messages: list,
         temperature: float,
         max_tokens: int,
         session_id: str | None = None,
     ) -> ChatCompletionResponse:
-        session_id = session_id or str(uuid.uuid4())
-
-        conversation_history = self.memory_service.load_session(
+        session_id = (
             session_id
+            or str(uuid.uuid4())
+        )
+
+        namespaced_session_id = (
+            f"{tenant_id}:{owner_id}:{session_id}"
+        )
+
+        conversation_history = (
+            self.memory_service.load_session(
+                namespaced_session_id
+            )
         )
 
         prompt = ""
@@ -42,41 +69,58 @@ class ChatService:
             )
 
         for message in messages:
-            role = message.role.upper()
-            prompt += f"{role}: {message.content}\n"
+            role = (
+                message.role.upper()
+            )
+
+            prompt += (
+                f"{role}: "
+                f"{message.content}\n"
+            )
 
         result = await self.llm_client.generate(
             prompt=prompt,
+            api_key=api_key,
         )
 
-        output_text = result["output"]
+        output_text = result[
+            "output"
+        ]
 
         self.memory_service.append_message(
-            session_id,
+            namespaced_session_id,
             "user",
             messages[-1].content,
         )
 
         self.memory_service.append_message(
-            session_id,
+            namespaced_session_id,
             "assistant",
             output_text,
         )
 
         self.checkpoint_service.save_checkpoint(
-            session_id,
+            namespaced_session_id,
             {
-                "session_id": session_id,
-                "conversation_history": self.memory_service.load_session(
-                    session_id
+                "session_id": (
+                    namespaced_session_id
                 ),
-                "final_response": output_text,
+                "conversation_history": (
+                    self.memory_service.load_session(
+                        namespaced_session_id
+                    )
+                ),
+                "final_response": (
+                    output_text
+                ),
             },
         )
 
         return ChatCompletionResponse(
             id=f"chatcmpl-{uuid.uuid4()}",
-            created=int(time.time()),
+            created=int(
+                time.time()
+            ),
             model=model,
             session_id=session_id,
             choices=[
@@ -98,16 +142,29 @@ class ChatService:
 
     async def stream_process(
         self,
+        owner_id: str,
+        tenant_id: str,
+        api_key: str,
+
         model: str,
         messages: list,
         temperature: float,
         max_tokens: int,
         session_id: str | None = None,
     ):
-        session_id = session_id or str(uuid.uuid4())
-
-        conversation_history = self.memory_service.load_session(
+        session_id = (
             session_id
+            or str(uuid.uuid4())
+        )
+
+        namespaced_session_id = (
+            f"{tenant_id}:{owner_id}:{session_id}"
+        )
+
+        conversation_history = (
+            self.memory_service.load_session(
+                namespaced_session_id
+            )
         )
 
         prompt = ""
@@ -119,15 +176,25 @@ class ChatService:
             )
 
         for message in messages:
-            role = message.role.upper()
-            prompt += f"{role}: {message.content}\n"
+            role = (
+                message.role.upper()
+            )
 
-        stream_id = f"chatcmpl-{uuid.uuid4()}"
+            prompt += (
+                f"{role}: "
+                f"{message.content}\n"
+            )
+
+        stream_id = (
+            f"chatcmpl-{uuid.uuid4()}"
+        )
+
         full_response = ""
 
         try:
             async for token in self.llm_client.stream_generate(
                 prompt=prompt,
+                api_key=api_key,
             ):
                 if not token.strip():
                     continue
@@ -154,25 +221,31 @@ class ChatService:
                 )
 
             self.memory_service.append_message(
-                session_id,
+                namespaced_session_id,
                 "user",
                 messages[-1].content,
             )
 
             self.memory_service.append_message(
-                session_id,
+                namespaced_session_id,
                 "assistant",
                 full_response,
             )
 
             self.checkpoint_service.save_checkpoint(
-                session_id,
+                namespaced_session_id,
                 {
-                    "session_id": session_id,
-                    "conversation_history": self.memory_service.load_session(
-                        session_id
+                    "session_id": (
+                        namespaced_session_id
                     ),
-                    "final_response": full_response,
+                    "conversation_history": (
+                        self.memory_service.load_session(
+                            namespaced_session_id
+                        )
+                    ),
+                    "final_response": (
+                        full_response
+                    ),
                 },
             )
 

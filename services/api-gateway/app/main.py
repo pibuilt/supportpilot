@@ -19,6 +19,10 @@ from app.middleware.auth_middleware import (
     AuthMiddleware,
 )
 
+from app.middleware.rate_limit_middleware import (
+    RateLimitMiddleware,
+)
+
 from app.utils.response import (
     error_response,
 )
@@ -58,6 +62,10 @@ app = FastAPI(
 # Middleware
 app.add_middleware(
     RequestContextMiddleware,
+)
+
+app.add_middleware(
+    RateLimitMiddleware,
 )
 
 app.add_middleware(

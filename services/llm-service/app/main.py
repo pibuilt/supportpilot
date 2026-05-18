@@ -2,6 +2,7 @@ from fastapi import FastAPI
 
 from app.api.v1 import generate, embeddings
 from app.middleware.request_context import RequestContextMiddleware
+from app.middleware.rate_limit_middleware import RateLimitMiddleware
 from app.core.logging import configure_logging
 
 
@@ -14,6 +15,7 @@ app = FastAPI(
 
 
 app.add_middleware(RequestContextMiddleware)
+app.add_middleware(RateLimitMiddleware)
 
 
 @app.get("/health")

@@ -8,6 +8,7 @@ from app.api.v1.tone import router as tone_router
 from app.api.v1.triage import router as triage_router
 from app.api.v1.tools import router as tools_router
 from app.middleware.request_context import RequestContextMiddleware
+from app.middleware.auth_middleware import AuthMiddleware
 
 
 app = FastAPI(
@@ -16,6 +17,7 @@ app = FastAPI(
 )
 
 app.add_middleware(RequestContextMiddleware)
+app.add_middleware(AuthMiddleware)
 
 app.include_router(chat_router)
 app.include_router(chat_stream_router)
