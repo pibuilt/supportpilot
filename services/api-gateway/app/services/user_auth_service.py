@@ -2,11 +2,20 @@ from sqlalchemy.orm import (
     Session,
 )
 
+from app.constants.audit_events import (
+    LOGIN_FAILED,
+    LOGIN_SUCCESS,
+    USER_CREATED,
+)
+
 from app.db.models.api_key import (
     APIKey,
 )
 from app.db.models.user import (
     User,
+)
+from app.services.audit_service import (
+    AuditService,
 )
 from app.utils.security import (
     create_access_token,
@@ -129,6 +138,21 @@ class UserAuthService:
         self.db.commit()
         self.db.refresh(user)
 
+        AuditService.log_event(
+            self.db,
+            tenant_id=user.tenant_id,
+            user_id=user.id,
+            event_type=USER_CREATED,
+            action="user_signup",
+            status="success",
+            resource_type="user",
+            resource_id=user.id,
+            event_metadata={
+                "email": user.email,
+                "role": user.role,
+            },
+        )
+
         api_key_data = (
             self._create_user_api_key(
                 user_id=user.id,
@@ -177,6 +201,21 @@ class UserAuthService:
         )
 
         if not user:
+
+            AuditService.log_event(
+                self.db,
+                tenant_id="unknown",
+                event_type=LOGIN_FAILED,
+                action="login_attempt",
+                status="failed",
+                resource_type="user",
+                resource_id=email,
+                event_metadata={
+                    "reason": "user_not_found",
+                    "email": email,
+                },
+            )
+
             raise ValueError(
                 "Invalid credentials"
             )
@@ -185,6 +224,22 @@ class UserAuthService:
             password,
             user.hashed_password,
         ):
+
+            AuditService.log_event(
+                self.db,
+                tenant_id=user.tenant_id,
+                user_id=user.id,
+                event_type=LOGIN_FAILED,
+                action="login_attempt",
+                status="failed",
+                resource_type="user",
+                resource_id=user.id,
+                event_metadata={
+                    "reason": "invalid_password",
+                    "email": user.email,
+                },
+            )
+
             raise ValueError(
                 "Invalid credentials"
             )
@@ -222,6 +277,21 @@ class UserAuthService:
             email=user.email,
             role=user.role,
             tenant_id=user.tenant_id,
+        )
+
+        AuditService.log_event(
+            self.db,
+            tenant_id=user.tenant_id,
+            user_id=user.id,
+            event_type=LOGIN_SUCCESS,
+            action="user_login",
+            status="success",
+            resource_type="user",
+            resource_id=user.id,
+            event_metadata={
+                "email": user.email,
+                "role": user.role,
+            },
         )
 
         return {

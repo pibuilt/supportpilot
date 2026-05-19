@@ -17,11 +17,20 @@ EXCLUDED_PATHS = {
     "/health",
     "/docs",
     "/openapi.json",
+
+    # API key endpoints
     "/v1/api-keys/validate",
+
+    # Auth endpoints
     "/v1/auth/signup",
     "/v1/auth/login",
     "/v1/auth/me",
 }
+
+
+EXCLUDED_PREFIXES = [
+    "/v1/admin",
+]
 
 
 class AuthMiddleware(
@@ -35,6 +44,12 @@ class AuthMiddleware(
         if (
             request.url.path
             in EXCLUDED_PATHS
+            or any(
+                request.url.path.startswith(
+                    prefix
+                )
+                for prefix in EXCLUDED_PREFIXES
+            )
         ):
             return await call_next(
                 request
