@@ -1,4 +1,4 @@
-# SupportPilot
+# SupportPilot.
 
 Production-grade AI support system.
 
