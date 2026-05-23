@@ -35,6 +35,26 @@ services:
 
     restart: unless-stopped
 
+  celery-worker:
+    build: .
+
+    container_name: sp_celery_worker
+
+    env_file:
+      - .env
+
+    depends_on:
+      - redis
+      - postgres
+
+    command: >
+      celery
+      -A app.worker
+      worker
+      --pool=solo
+      --loglevel=info
+
+    restart: unless-stopped
   llm-service:
     build:
       context: .
