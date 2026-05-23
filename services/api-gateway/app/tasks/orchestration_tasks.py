@@ -4,8 +4,17 @@ from datetime import datetime, UTC
 from app.celery_app import celery_app
 from app.db.session import SessionLocal
 from app.db.models.async_job import AsyncJob
+
 from app.services.orchestration_service import (
     OrchestrationService,
+)
+
+from app.repositories.chat_session_repository import (
+    ChatSessionRepository,
+)
+
+from app.repositories.chat_message_repository import (
+    ChatMessageRepository,
 )
 
 
@@ -36,6 +45,7 @@ def process_orchestration_job(
             return
 
         job.status = "PROCESSING"
+
         job.started_at = datetime.now(
             UTC
         )
@@ -54,11 +64,60 @@ def process_orchestration_job(
             context_limit=context_limit,
         )
 
+        session_repo = (
+            ChatSessionRepository(db)
+        )
+
+        message_repo = (
+            ChatMessageRepository(db)
+        )
+
+        actual_session_id = result[
+            "session_id"
+        ]
+
+        session_repo.get_or_create(
+            session_id=actual_session_id,
+            owner_id=owner_id,
+            tenant_id=tenant_id,
+        )
+
+        message_repo.create(
+            session_id=actual_session_id,
+            owner_id=owner_id,
+            tenant_id=tenant_id,
+            role="user",
+            content=query,
+        )
+
+        assistant_response = (
+            result["tone"][
+                "final_response"
+            ]
+        )
+
+        message_repo.create(
+            session_id=actual_session_id,
+            owner_id=owner_id,
+            tenant_id=tenant_id,
+            role="assistant",
+            content=assistant_response,
+        )
+
+        session_repo.increment_message_count(
+            actual_session_id
+        )
+
+        session_repo.increment_message_count(
+            actual_session_id
+        )
+
         job.result_json = json.dumps(
             result
         )
 
         job.status = "COMPLETED"
+
         job.completed_at = datetime.now(
             UTC
         )
@@ -83,8 +142,12 @@ def process_orchestration_job(
         )
 
         if job:
+
             job.status = "FAILED"
-            job.error_message = str(e)
+
+            job.error_message = str(
+                e
+            )
 
             db.commit()
 

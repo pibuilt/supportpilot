@@ -27,6 +27,8 @@ from app.db.models.api_key import APIKey
 from app.db.models.usage_log import UsageLog
 from app.db.models.user import User
 from app.db.models.async_job import AsyncJob
+from app.db.models.chat_session import ChatSession
+from app.db.models.chat_message import ChatMessage
 
 
 # this is the Alembic Config object, which provides
