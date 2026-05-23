@@ -57,6 +57,11 @@ class AsyncJob(Base):
         nullable=True,
     )
 
+    result_json = Column(
+        Text,
+        nullable=True,
+    )
+
     retry_count = Column(
         Integer,
         nullable=False,

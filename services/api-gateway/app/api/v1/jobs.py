@@ -1,3 +1,5 @@
+import json
+
 from fastapi import (
     APIRouter,
     Depends,
@@ -27,11 +29,22 @@ def get_job_status(
             detail="Job not found",
         )
 
+    result = None
+
+    if job.result_json:
+        try:
+            result = json.loads(
+                job.result_json
+            )
+        except Exception:
+            result = job.result_json
+
     return {
         "job_id": job.id,
         "job_type": job.job_type,
         "status": job.status,
         "error_message": job.error_message,
+        "result": result,
         "started_at": job.started_at,
         "completed_at": job.completed_at,
     }

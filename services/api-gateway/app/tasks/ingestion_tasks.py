@@ -1,3 +1,4 @@
+import json
 from datetime import datetime, UTC
 
 from app.celery_app import celery_app
@@ -42,14 +43,19 @@ def process_ingestion_job(
 
         service = IngestionService(db)
 
-        service.ingest_document(
+        result = service.ingest_document(
             owner_id=owner_id,
             tenant_id=tenant_id,
             document_id=document_id,
             text=text,
         )
 
+        job.result_json = json.dumps(
+            result
+        )
+
         job.status = "COMPLETED"
+
         job.completed_at = datetime.now(
             UTC
         )
