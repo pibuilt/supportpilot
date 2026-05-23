@@ -23,3 +23,4 @@ celery_app.conf.update(
 )
 
 import app.tasks.test_task
+import app.tasks.ingestion_tasks

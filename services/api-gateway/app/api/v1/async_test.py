@@ -3,8 +3,9 @@ from fastapi import Depends
 
 from app.db.session import get_db
 from app.services.async_job_service import AsyncJobService
-from app.tasks.test_task import ping
-
+from app.tasks.ingestion_tasks import (
+    process_ingestion_job,
+)
 
 router = APIRouter()
 
@@ -23,7 +24,7 @@ def test_async(
         job_type="TEST",
     )
 
-    ping.delay(
+    process_ingestion_job.delay(
         str(job.id)
     )
 
