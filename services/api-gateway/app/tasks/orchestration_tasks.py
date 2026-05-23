@@ -4,22 +4,26 @@ from datetime import datetime, UTC
 from app.celery_app import celery_app
 from app.db.session import SessionLocal
 from app.db.models.async_job import AsyncJob
-from app.services.ingestion_service import (
-    IngestionService,
+from app.services.orchestration_service import (
+    OrchestrationService,
 )
 
 
 @celery_app.task
-def process_ingestion_job(
+def process_orchestration_job(
     job_id: str,
     owner_id: str,
     tenant_id: str,
-    document_id: str,
-    text: str,
+    api_key: str,
+    document_id: str | None,
+    query: str,
+    session_id: str | None,
+    context_limit: int,
 ):
     db = SessionLocal()
 
     try:
+
         job = (
             db.query(AsyncJob)
             .filter(
@@ -29,9 +33,6 @@ def process_ingestion_job(
         )
 
         if not job:
-            print(
-                f"JOB NOT FOUND: {job_id}"
-            )
             return
 
         job.status = "PROCESSING"
@@ -41,18 +42,16 @@ def process_ingestion_job(
 
         db.commit()
 
-        service = IngestionService(db)
+        service = OrchestrationService()
 
-        if document_id == "FAIL_TEST":
-            raise Exception(
-                "Simulated ingestion failure"
-            )
-
-        result = service.ingest_document(
+        result = service.process(
             owner_id=owner_id,
             tenant_id=tenant_id,
+            api_key=api_key,
             document_id=document_id,
-            text=text,
+            query=query,
+            session_id=session_id,
+            context_limit=context_limit,
         )
 
         job.result_json = json.dumps(
@@ -60,7 +59,6 @@ def process_ingestion_job(
         )
 
         job.status = "COMPLETED"
-
         job.completed_at = datetime.now(
             UTC
         )

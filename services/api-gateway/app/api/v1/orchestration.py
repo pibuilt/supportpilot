@@ -12,10 +12,12 @@ from app.repositories.embedding_repository import (
 )
 from app.schemas.orchestration import (
     OrchestrationRequest,
-    OrchestrationResponse,
 )
-from app.services.orchestration_service import (
-    OrchestrationService,
+from app.services.async_job_service import (
+    AsyncJobService,
+)
+from app.tasks.orchestration_tasks import (
+    process_orchestration_job,
 )
 
 
@@ -24,13 +26,8 @@ router = APIRouter(
     tags=["Orchestration"],
 )
 
-service = OrchestrationService()
 
-
-@router.post(
-    "",
-    response_model=OrchestrationResponse,
-)
+@router.post("")
 def orchestrate(
     request: OrchestrationRequest,
     raw_request: Request,
@@ -53,8 +50,9 @@ def orchestrate(
     )
 
     if request.document_id:
-        embedding_repo = EmbeddingRepository(
-            db
+
+        embedding_repo = (
+            EmbeddingRepository(db)
         )
 
         if not embedding_repo.document_exists_for_owner(
@@ -67,14 +65,29 @@ def orchestrate(
                 detail="Document not found",
             )
 
-    return service.process(
+    job_service = AsyncJobService(
+        db
+    )
+
+    job = job_service.create_job(
         owner_id=owner_id,
         tenant_id=tenant_id,
-        api_key=api_key,
-
         document_id=request.document_id,
-        query=request.query,
-
-        session_id=request.session_id,
-        context_limit=request.context_limit,
+        job_type="ORCHESTRATION",
     )
+
+    process_orchestration_job.delay(
+        str(job.id),
+        owner_id,
+        tenant_id,
+        api_key,
+        request.document_id,
+        request.query,
+        request.session_id,
+        request.context_limit,
+    )
+
+    return {
+        "job_id": job.id,
+        "status": job.status,
+    }
