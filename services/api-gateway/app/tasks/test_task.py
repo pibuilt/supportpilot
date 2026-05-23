@@ -2,10 +2,15 @@ from app.celery_app import celery_app
 
 
 @celery_app.task
-def ping():
+def ping(
+    job_id: str,
+):
 
     print(
-        "PING TASK EXECUTED"
+        f"PROCESSING JOB {job_id}"
     )
 
-    return "pong"
+    return {
+        "job_id": job_id,
+        "status": "COMPLETED",
+    }

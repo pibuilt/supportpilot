@@ -11,6 +11,10 @@ from app.routes.health import (
     router as health_router,
 )
 
+from app.api.v1.async_test import (
+    router as async_test_router,
+)
+
 from app.middleware.request_context import (
     RequestContextMiddleware,
 )
@@ -79,6 +83,10 @@ app.add_middleware(
 # Routes
 app.include_router(
     health_router,
+)
+
+app.include_router(
+    async_test_router,
 )
 
 app.include_router(
