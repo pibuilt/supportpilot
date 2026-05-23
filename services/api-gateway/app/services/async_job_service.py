@@ -28,3 +28,16 @@ class AsyncJobService:
         self.db.refresh(job)
 
         return job
+
+    def get_job(
+        self,
+        job_id: str,
+    ) -> AsyncJob | None:
+
+        return (
+            self.db.query(AsyncJob)
+            .filter(
+                AsyncJob.id == job_id
+            )
+            .first()
+        )

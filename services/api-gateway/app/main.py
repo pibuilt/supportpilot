@@ -15,6 +15,10 @@ from app.api.v1.async_test import (
     router as async_test_router,
 )
 
+from app.api.v1.jobs import (
+    router as jobs_router,
+)
+
 from app.middleware.request_context import (
     RequestContextMiddleware,
 )
@@ -91,6 +95,11 @@ app.include_router(
 
 app.include_router(
     ingestion_router,
+    prefix="/v1",
+)
+
+app.include_router(
+    jobs_router,
     prefix="/v1",
 )
 
