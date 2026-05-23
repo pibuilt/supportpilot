@@ -19,6 +19,10 @@ from app.api.v1.jobs import (
     router as jobs_router,
 )
 
+from app.api.v1.sessions import (
+    router as sessions_router,
+)
+
 from app.middleware.request_context import (
     RequestContextMiddleware,
 )
@@ -93,6 +97,7 @@ app.include_router(
     async_test_router,
 )
 
+
 app.include_router(
     ingestion_router,
     prefix="/v1",
@@ -113,6 +118,10 @@ app.include_router(
 
 app.include_router(
     tickets_router,
+)
+
+app.include_router(
+    sessions_router,
 )
 
 app.include_router(

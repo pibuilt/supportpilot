@@ -62,3 +62,18 @@ class ChatMessageRepository:
             .limit(limit)
             .all()
         )
+    
+    def count_messages(
+        self,
+        session_id: str,
+    ):
+        return (
+            self.db.query(
+                ChatMessage
+            )
+            .filter(
+                ChatMessage.session_id
+                == session_id
+            )
+            .count()
+        )

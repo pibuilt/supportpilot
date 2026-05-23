@@ -113,3 +113,24 @@ class ChatSessionRepository:
             .limit(limit)
             .all()
         )
+    
+    def get_owned_session(
+        self,
+        session_id: str,
+        owner_id: str,
+        tenant_id: str,
+    ):
+        return (
+            self.db.query(
+                ChatSession
+            )
+            .filter(
+                ChatSession.id
+                == session_id,
+                ChatSession.owner_id
+                == owner_id,
+                ChatSession.tenant_id
+                == tenant_id,
+            )
+            .first()
+        )
