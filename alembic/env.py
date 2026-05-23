@@ -26,6 +26,7 @@ from app.db.models.embedding import Embedding
 from app.db.models.api_key import APIKey
 from app.db.models.usage_log import UsageLog
 from app.db.models.user import User
+from app.db.models.async_job import AsyncJob
 
 
 # this is the Alembic Config object, which provides
