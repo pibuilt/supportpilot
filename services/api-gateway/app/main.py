@@ -7,6 +7,17 @@ from fastapi.exceptions import (
     RequestValidationError,
 )
 
+from fastapi.responses import Response
+
+from prometheus_client import (
+    generate_latest,
+    CONTENT_TYPE_LATEST,
+)
+
+from app.middleware.prometheus_middleware import (
+    PrometheusMiddleware, 
+)
+
 from app.routes.health import (
     router as health_router,
 )
@@ -96,6 +107,10 @@ app.add_middleware(
     AuthMiddleware,
 )
 
+app.add_middleware(
+    PrometheusMiddleware,
+)
+
 # Routes
 app.include_router(
     health_router,
@@ -155,6 +170,13 @@ app.include_router(
 app.include_router(
     admin_router,
 )
+
+@app.get("/metrics")
+def metrics():
+    return Response(
+        generate_latest(),
+        media_type=CONTENT_TYPE_LATEST,
+    )
 
 # Global Exception Handler
 @app.exception_handler(

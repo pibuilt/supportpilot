@@ -7,9 +7,11 @@ from app.db.models.async_job import AsyncJob
 from app.services.ingestion_service import (
     IngestionService,
 )
+from langsmith import traceable
 
 
 @celery_app.task
+@traceable(name="ingestion_job")
 def process_ingestion_job(
     job_id: str,
     owner_id: str,

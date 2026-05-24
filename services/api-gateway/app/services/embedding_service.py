@@ -1,6 +1,6 @@
 import os
 import requests
-
+from langsmith import traceable
 
 OLLAMA_URL = os.getenv(
     "OLLAMA_URL"
@@ -10,7 +10,7 @@ OLLAMA_EMBEDDING_MODEL = os.getenv(
     "OLLAMA_EMBEDDING_MODEL"
 )
 
-
+@traceable(name="embedding_generation")
 def generate_embedding(text: str) -> list[float]:
     response = requests.post(
         f"{OLLAMA_URL}/api/embeddings",

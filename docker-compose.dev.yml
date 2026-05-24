@@ -103,3 +103,39 @@ services:
       - "6379:6379"
 
     restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus
+
+    container_name: sp_prometheus
+
+    ports:
+      - "9090:9090"
+
+    volumes:
+      - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml
+
+    depends_on:
+      - api-gateway
+
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana
+
+    container_name: sp_grafana
+
+    env_file:
+      - .env
+
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+
+    ports:
+      - "3000:3000"
+
+    depends_on:
+      - prometheus
+
+    restart: unless-stopped

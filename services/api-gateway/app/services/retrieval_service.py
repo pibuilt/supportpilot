@@ -3,8 +3,9 @@ from sqlalchemy.orm import Session
 from app.repositories.embedding_repository import EmbeddingRepository
 from app.services.embedding_service import generate_embedding
 from app.services.reranking_service import rerank_results
+from langsmith import traceable
 
-
+@traceable(name="vector_retrieval")
 def search_documents(
     db: Session,
     owner_id: str,

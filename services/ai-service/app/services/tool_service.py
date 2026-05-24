@@ -1,10 +1,11 @@
 from app.tools.registry import ToolRegistry
-
+from langsmith import traceable
 
 class ToolService:
     def __init__(self):
         self.registry = ToolRegistry()
 
+    @traceable(name="tool_execution")
     async def execute_tool(
         self,
         tool_name: str,

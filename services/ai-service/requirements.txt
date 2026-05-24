@@ -25,3 +25,5 @@ aiohttp==3.12.10
 langsmith==0.7.22
 
 redis==6.2.0
+
+prometheus-client

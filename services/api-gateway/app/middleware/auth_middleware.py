@@ -17,6 +17,7 @@ EXCLUDED_PATHS = {
     "/health",
     "/docs",
     "/openapi.json",
+    "/metrics",
 
     # API key endpoints
     "/v1/api-keys/validate",

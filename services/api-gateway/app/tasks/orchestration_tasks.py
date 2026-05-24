@@ -17,8 +17,11 @@ from app.repositories.chat_message_repository import (
     ChatMessageRepository,
 )
 
+from langsmith import traceable
+
 
 @celery_app.task
+@traceable(name="orchestration_job")
 def process_orchestration_job(
     job_id: str,
     owner_id: str,

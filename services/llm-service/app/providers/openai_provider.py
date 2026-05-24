@@ -1,7 +1,7 @@
 import os
 from openai import AsyncOpenAI
 from app.providers.base import BaseLLMProvider
-
+from langsmith import traceable
 
 class OpenAIProvider(BaseLLMProvider):
     def __init__(self):
@@ -12,6 +12,7 @@ class OpenAIProvider(BaseLLMProvider):
 
         self.default_model = os.getenv("OPENAI_MODEL", "openrouter/auto")
 
+    @traceable(name="openai_generate")
     async def generate(
         self,
         prompt: str,
@@ -26,6 +27,7 @@ class OpenAIProvider(BaseLLMProvider):
 
         return response.choices[0].message.content
 
+    @traceable(name="openai_stream_generate")
     async def stream_generate(
         self,
         prompt: str,
@@ -44,7 +46,8 @@ class OpenAIProvider(BaseLLMProvider):
 
             if delta:
                 yield delta
-
+                
+    @traceable(name="openai_embedding_generation")
     async def embed(self, text: str) -> list[float]:
         response = await self.client.embeddings.create(
             model="text-embedding-3-small",

@@ -10,6 +10,8 @@ from app.graph.checkpoint import (
     GraphCheckpointService,
 )
 
+from langsmith import traceable
+
 
 class OrchestrationService:
     def __init__(self):
@@ -25,6 +27,7 @@ class OrchestrationService:
             GraphCheckpointService()
         )
 
+    @traceable(name="orchestration_process")
     async def process(
         self,
         owner_id: str,

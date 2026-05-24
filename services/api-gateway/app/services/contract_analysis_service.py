@@ -5,6 +5,7 @@ from app.legal.clause_detector import detect_clauses
 from app.repositories.clause_analysis_repository import (
     ClauseAnalysisRepository,
 )
+from langsmith import traceable
 
 
 def deduplicate_findings(findings):
@@ -58,7 +59,7 @@ def generate_executive_summary(findings):
         "critical_clauses": list(set(critical_clauses)),
     }
 
-
+@traceable(name="contract_analysis")
 def analyze_contract(
     owner_id: str,
     tenant_id: str,

@@ -4,6 +4,7 @@ from urllib import response
 
 import httpx
 from app.providers.base import BaseLLMProvider
+from langsmith import traceable
 
 
 class OllamaProvider(BaseLLMProvider):
@@ -12,6 +13,7 @@ class OllamaProvider(BaseLLMProvider):
         self.default_model = os.getenv("OLLAMA_LLM_MODEL", "qwen2.5:1.5b")
         self.embedding_model = os.getenv("OLLAMA_EMBEDDING_MODEL", "nomic-embed-text:latest")
 
+    @traceable(name="ollama_generate")
     async def generate(self, prompt: str, model: str | None = None) -> str:
         payload = {
             "model": model or self.default_model,
@@ -33,6 +35,7 @@ class OllamaProvider(BaseLLMProvider):
 
             return data.get("response", "")
 
+    @traceable(name="ollama_stream_generate")
     async def stream_generate(
         self,
         prompt: str,
@@ -66,6 +69,7 @@ class OllamaProvider(BaseLLMProvider):
                     if token:
                         yield token
 
+    @traceable(name="ollama_embedding_generation")
     async def embed(self, text: str) -> list[float]:
         payload = {
             "model": self.embedding_model,
