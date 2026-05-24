@@ -5,6 +5,9 @@ from sqlalchemy.orm import Session
 from app.rag.chunker import chunk_text
 from app.repositories.embedding_repository import EmbeddingRepository
 from app.services.embedding_service import generate_embedding
+from app.observability.metrics import (
+    INGESTION_COUNT,
+)
 
 
 class IngestionService:
@@ -62,6 +65,7 @@ class IngestionService:
                 )
 
             self.db.commit()
+            INGESTION_COUNT.inc()
 
         except Exception:
             self.db.rollback()
