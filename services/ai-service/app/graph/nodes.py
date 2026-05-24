@@ -1,3 +1,5 @@
+from langsmith import traceable
+
 from app.agents.specialist_agent import SpecialistAgent
 from app.agents.tone_agent import ToneAgent
 from app.agents.triage_agent import TriageAgent
@@ -21,6 +23,7 @@ tool_decision_service = (
 tool_service = ToolService()
 
 
+@traceable(name="triage")
 async def triage_node(
     state: OrchestrationState,
 ):
@@ -40,6 +43,7 @@ async def triage_node(
     return state
 
 
+@traceable(name="tool_decision")
 async def tool_decision_node(
     state: OrchestrationState,
 ):
@@ -69,6 +73,7 @@ async def tool_decision_node(
     return state
 
 
+@traceable(name="tool_execution")
 async def tool_execution_node(
     state: OrchestrationState,
 ):
@@ -138,6 +143,7 @@ async def tool_execution_node(
     return state
 
 
+@traceable(name="specialist")
 async def specialist_node(
     state: OrchestrationState,
 ):
@@ -171,6 +177,7 @@ async def specialist_node(
     return state
 
 
+@traceable(name="tone")
 async def tone_node(
     state: OrchestrationState,
 ):

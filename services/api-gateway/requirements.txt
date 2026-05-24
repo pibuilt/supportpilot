@@ -16,3 +16,4 @@ pypdf
 python-docx
 beautifulsoup4
 langchain-text-splitters
+langsmith
