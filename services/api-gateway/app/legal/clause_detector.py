@@ -2,7 +2,10 @@ import re
 from app.legal.patterns import CLAUSE_PATTERNS
 
 
-def determine_risk_level(clause_type: str, clause_text: str) -> str:
+def determine_risk_level(
+    clause_type: str,
+    clause_text: str,
+) -> str:
     text = clause_text.lower()
 
     high_risk_terms = [
@@ -35,12 +38,23 @@ def determine_risk_level(clause_type: str, clause_text: str) -> str:
         if term in text:
             return "medium"
 
-    if clause_type in [
+    high_risk_types = {
         "liability",
         "indemnification",
         "data_privacy",
+    }
+
+    medium_risk_types = {
+        "termination",
+        "payment",
         "intellectual_property",
-    ]:
+        "dispute_resolution",
+    }
+
+    if clause_type in high_risk_types:
+        return "high"
+
+    if clause_type in medium_risk_types:
         return "medium"
 
     return "low"
@@ -67,7 +81,10 @@ def calculate_confidence_score(
     if matched_text.lower() in full_text.lower():
         score += 0.05
 
-    return round(min(score, 0.99), 2)
+    return round(
+        min(score, 0.99),
+        2,
+    )
 
 
 def detect_clauses(text: str):
@@ -77,7 +94,9 @@ def detect_clauses(text: str):
     findings = []
 
     for clause_type, patterns in CLAUSE_PATTERNS.items():
+
         for pattern in patterns:
+
             matches = re.finditer(
                 pattern,
                 text,
@@ -85,6 +104,7 @@ def detect_clauses(text: str):
             )
 
             for match in matches:
+
                 findings.append(
                     {
                         "clause_type": clause_type,
@@ -96,7 +116,7 @@ def detect_clauses(text: str):
                         ),
                         "risk_level": determine_risk_level(
                             clause_type,
-                            text,
+                            match.group(),
                         ),
                         "metadata": {
                             "pattern": pattern,

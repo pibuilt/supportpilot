@@ -76,11 +76,12 @@ def analyze_contract(
     )
 
     all_findings = []
-    summary_counts = {}
 
     try:
         for chunk in chunks:
-            findings = detect_clauses(chunk.chunk_text)
+            findings = detect_clauses(
+                chunk.chunk_text
+            )
 
             if findings:
                 ClauseAnalysisRepository.save_clause_analyses(
@@ -93,12 +94,8 @@ def analyze_contract(
                 )
 
             for finding in findings:
-                all_findings.append(finding)
-
-                clause_type = finding["clause_type"]
-
-                summary_counts[clause_type] = (
-                    summary_counts.get(clause_type, 0) + 1
+                all_findings.append(
+                    finding
                 )
 
         db.commit()
@@ -107,22 +104,52 @@ def analyze_contract(
         db.rollback()
         raise
 
-    deduplicated_findings = deduplicate_findings(
-        all_findings
+    deduplicated_findings = (
+        deduplicate_findings(
+            all_findings
+        )
     )
 
-    executive_summary = generate_executive_summary(
-        deduplicated_findings
+    summary_counts = {}
+
+    for finding in deduplicated_findings:
+
+        clause_type = (
+            finding["clause_type"]
+        )
+
+        summary_counts[
+            clause_type
+        ] = (
+            summary_counts.get(
+                clause_type,
+                0,
+            )
+            + 1
+        )
+
+    executive_summary = (
+        generate_executive_summary(
+            deduplicated_findings
+        )
     )
 
     return {
         "owner_id": owner_id,
         "tenant_id": tenant_id,
         "document_id": document_id,
-        "clauses": deduplicated_findings,
+        "clauses": (
+            deduplicated_findings
+        ),
         "summary": {
-            "total_clauses": len(deduplicated_findings),
-            "by_type": summary_counts,
+            "total_clauses": len(
+                deduplicated_findings
+            ),
+            "by_type": (
+                summary_counts
+            ),
         },
-        "executive_summary": executive_summary,
+        "executive_summary": (
+            executive_summary
+        ),
     }

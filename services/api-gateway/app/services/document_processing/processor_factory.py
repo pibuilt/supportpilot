@@ -10,6 +10,18 @@ from app.services.document_processing.docx_processor import (
     DOCXProcessor,
 )
 
+from app.services.document_processing.md_processor import (
+    MDProcessor,
+)
+
+from app.services.document_processing.html_processor import (
+    HTMLProcessor,
+)
+
+from app.services.document_processing.csv_processor import (
+    CSVProcessor,
+)
+
 
 class ProcessorFactory:
 
@@ -17,7 +29,6 @@ class ProcessorFactory:
     def get_processor(
         filename: str,
     ):
-
         filename = (
             filename.lower()
         )
@@ -26,6 +37,23 @@ class ProcessorFactory:
             ".txt"
         ):
             return TXTProcessor()
+
+        if filename.endswith(
+            ".md"
+        ):
+            return MDProcessor()
+
+        if filename.endswith(
+            ".html"
+        ) or filename.endswith(
+            ".htm"
+        ):
+            return HTMLProcessor()
+
+        if filename.endswith(
+            ".csv"
+        ):
+            return CSVProcessor()
 
         if filename.endswith(
             ".pdf"

@@ -51,6 +51,10 @@ from app.api.v1.documents import (
     router as documents_router,
 )
 
+from app.api.v1.exports import (
+    router as exports_router,
+)
+
 from app.api.v1.analyze import (
     router as analysis_router,
 )
@@ -126,6 +130,10 @@ app.include_router(
 
 app.include_router(
     documents_router,
+)
+
+app.include_router(
+    exports_router,
 )
 
 app.include_router(
