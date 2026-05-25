@@ -1,18 +1,25 @@
 import json
 from datetime import datetime, UTC
 
+from langsmith import traceable
+
 from app.celery_app import celery_app
-from app.db.session import SessionLocal
 from app.db.models.async_job import AsyncJob
+from app.db.session import SessionLocal
 from app.services.ingestion_service import (
     IngestionService,
 )
-from langsmith import traceable
 
 
-@celery_app.task
+MAX_RETRIES = 3
+
+
+@celery_app.task(
+    bind=True,
+)
 @traceable(name="ingestion_job")
 def process_ingestion_job(
+    self,
     job_id: str,
     owner_id: str,
     tenant_id: str,
@@ -87,12 +94,47 @@ def process_ingestion_job(
         )
 
         if job:
-            job.status = "FAILED"
+
+            current_retry = (
+                self.request.retries
+            )
+
+            job.retry_count = (
+                current_retry
+            )
+
             job.error_message = str(e)
+
+            if (
+                current_retry
+                >= MAX_RETRIES
+            ):
+                job.status = (
+                    "DEAD_LETTER"
+                )
+
+                job.completed_at = (
+                    datetime.now(
+                        UTC
+                    )
+                )
+
+                db.commit()
+
+                raise
+
+            job.status = "FAILED"
 
             db.commit()
 
-        raise
+        raise self.retry(
+            exc=e,
+            countdown=(
+                2
+                ** self.request.retries
+            ),
+            max_retries=MAX_RETRIES,
+        )
 
     finally:
         db.close()

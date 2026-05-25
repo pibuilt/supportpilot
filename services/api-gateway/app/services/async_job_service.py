@@ -41,3 +41,35 @@ class AsyncJobService:
             )
             .first()
         )
+
+    def reset_job_for_retry(
+        self,
+        job_id: str,
+    ) -> AsyncJob | None:
+
+        job = (
+            self.db.query(AsyncJob)
+            .filter(
+                AsyncJob.id == job_id
+            )
+            .first()
+        )
+
+        if not job:
+            return None
+
+        job.status = "QUEUED"
+
+        job.retry_count = 0
+
+        job.error_message = None
+
+        job.started_at = None
+
+        job.completed_at = None
+
+        self.db.commit()
+
+        self.db.refresh(job)
+
+        return job

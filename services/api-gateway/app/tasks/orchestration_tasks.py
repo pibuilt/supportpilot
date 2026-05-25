@@ -1,28 +1,34 @@
 import json
 from datetime import datetime, UTC
 
-from app.celery_app import celery_app
-from app.db.session import SessionLocal
-from app.db.models.async_job import AsyncJob
+from langsmith import traceable
 
-from app.services.orchestration_service import (
-    OrchestrationService,
+from app.celery_app import celery_app
+from app.db.models.async_job import AsyncJob
+from app.db.session import SessionLocal
+
+from app.repositories.chat_message_repository import (
+    ChatMessageRepository,
 )
 
 from app.repositories.chat_session_repository import (
     ChatSessionRepository,
 )
 
-from app.repositories.chat_message_repository import (
-    ChatMessageRepository,
+from app.services.orchestration_service import (
+    OrchestrationService,
 )
 
-from langsmith import traceable
+
+MAX_RETRIES = 3
 
 
-@celery_app.task
+@celery_app.task(
+    bind=True,
+)
 @traceable(name="orchestration_job")
 def process_orchestration_job(
+    self,
     job_id: str,
     owner_id: str,
     tenant_id: str,
@@ -146,15 +152,48 @@ def process_orchestration_job(
 
         if job:
 
-            job.status = "FAILED"
+            current_retry = (
+                self.request.retries
+            )
+
+            job.retry_count = (
+                current_retry
+            )
 
             job.error_message = str(
                 e
             )
 
+            if (
+                current_retry
+                >= MAX_RETRIES
+            ):
+                job.status = (
+                    "DEAD_LETTER"
+                )
+
+                job.completed_at = (
+                    datetime.now(
+                        UTC
+                    )
+                )
+
+                db.commit()
+
+                raise
+
+            job.status = "FAILED"
+
             db.commit()
 
-        raise
+        raise self.retry(
+            exc=e,
+            countdown=(
+                2
+                ** self.request.retries
+            ),
+            max_retries=MAX_RETRIES,
+        )
 
     finally:
         db.close()

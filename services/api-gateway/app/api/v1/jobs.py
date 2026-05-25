@@ -43,6 +43,7 @@ def get_job_status(
         "job_id": job.id,
         "job_type": job.job_type,
         "status": job.status,
+        "retry_count": job.retry_count,
         "error_message": job.error_message,
         "result": result,
         "started_at": job.started_at,
