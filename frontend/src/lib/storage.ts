@@ -3,6 +3,7 @@ export const API_KEY = "api_key";
 export const AUTH_EVENT = "supportpilot:logout";
 export const ASSISTANT_ACTIVE_JOB_KEY = "assistant_active_job_id";
 export const ASSISTANT_ACTIVE_SESSION_KEY = "assistant_active_session_id";
+export const ASSISTANT_PENDING_PROMPT_KEY = "assistant_pending_prompt";
 
 export function getToken() {
   return localStorage.getItem(TOKEN_KEY);

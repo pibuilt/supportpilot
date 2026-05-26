@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FileUp, LoaderCircle, Trash2 } from "lucide-react";
+import { Download, FileUp, LoaderCircle, Trash2 } from "lucide-react";
 import { AxiosError } from "axios";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -8,9 +8,9 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { documentsApi } from "@/lib/api";
+import { documentsApi, exportsApi } from "@/lib/api";
 import { useJobPolling } from "@/hooks/use-job-polling";
-import { formatDate } from "@/lib/utils";
+import { downloadBlob, formatDate } from "@/lib/utils";
 import { useToast } from "@/lib/toast";
 import { useAuth } from "@/features/auth/auth-context";
 
@@ -102,6 +102,17 @@ export function DocumentsPage() {
     });
   }
 
+  async function handleExport(format: "json" | "csv") {
+    if (!hasApiKey) {
+      push({ tone: "error", title: "Add a product API key before exporting documents" });
+      return;
+    }
+
+    const payload = await exportsApi.download("documents", format);
+    downloadBlob(payload.blob, payload.filename);
+    push({ tone: "success", title: `Documents exported as ${format.toUpperCase()}` });
+  }
+
   return (
     <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
       <div className="space-y-6">
@@ -119,7 +130,17 @@ export function DocumentsPage() {
                 Upload supported files to `/v1/ingest/file` and poll `/v1/jobs/:job_id` until completion.
               </p>
             </div>
-            <Badge tone="accent">Async jobs</Badge>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button type="button" variant="secondary" onClick={() => handleExport("json")} disabled={!hasApiKey}>
+                <Download className="mr-2 h-4 w-4" />
+                Export JSON
+              </Button>
+              <Button type="button" variant="secondary" onClick={() => handleExport("csv")} disabled={!hasApiKey}>
+                <Download className="mr-2 h-4 w-4" />
+                Export CSV
+              </Button>
+              <Badge tone="accent">Async jobs</Badge>
+            </div>
           </div>
           <form className="mt-5 space-y-4" onSubmit={handleUpload}>
             <div

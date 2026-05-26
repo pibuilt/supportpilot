@@ -102,8 +102,8 @@ export function DashboardPage() {
             )}
           </div>
           <div className="mt-4 grid gap-3">
-            <QuickAction to="/search" label="Run semantic search" icon={Search} />
-            <QuickAction to="/analysis" label="Analyze a contract" icon={AlertCircle} />
+            <QuickAction to="/assistant?mode=search" label="Run semantic search" icon={Search} />
+            <QuickAction to="/assistant?mode=analyze" label="Analyze a contract" icon={AlertCircle} />
             <QuickAction to="/tickets" label="Create support ticket" icon={Ticket} />
             <QuickAction to="/assistant" label="Ask the AI assistant" icon={Bot} />
           </div>

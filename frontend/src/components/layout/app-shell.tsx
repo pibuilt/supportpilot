@@ -1,4 +1,4 @@
-import { Activity, Bot, FileKey, Files, LayoutDashboard, LogOut, Search, Shield, Ticket, Upload } from "lucide-react";
+import { Bot, Files, LayoutDashboard, LogOut, Shield, Ticket } from "lucide-react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useMemo } from "react";
 import { cn } from "@/lib/utils";
@@ -9,12 +9,8 @@ import { Badge } from "@/components/ui/badge";
 const labels: Record<string, string> = {
   "": "Dashboard",
   documents: "Documents",
-  search: "Semantic Search",
-  analysis: "Contract Analysis",
   tickets: "Tickets",
   assistant: "AI Assistant",
-  sessions: "Sessions",
-  exports: "Exports",
   "api-keys": "API Keys",
   admin: "Admin",
 };
@@ -28,12 +24,8 @@ export function AppShell() {
     () => [
       { to: "/", label: "Dashboard", icon: LayoutDashboard },
       { to: "/documents", label: "Documents", icon: Files },
-      { to: "/search", label: "Search", icon: Search },
-      { to: "/analysis", label: "Analysis", icon: Activity },
       { to: "/tickets", label: "Tickets", icon: Ticket },
       { to: "/assistant", label: "Assistant", icon: Bot },
-      { to: "/sessions", label: "Sessions", icon: Upload },
-      { to: "/exports", label: "Exports", icon: FileKey },
       { to: "/api-keys", label: "API Keys", icon: Shield },
     ],
     [],

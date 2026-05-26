@@ -6,12 +6,8 @@ import { LoginPage } from "@/pages/login-page";
 import { SignupPage } from "@/pages/signup-page";
 import { DashboardPage } from "@/pages/dashboard-page";
 import { DocumentsPage } from "@/pages/documents-page";
-import { SearchPage } from "@/pages/search-page";
-import { AnalysisPage } from "@/pages/analysis-page";
 import { TicketsPage } from "@/pages/tickets-page";
 import { AssistantPage } from "@/pages/assistant-page";
-import { SessionsPage } from "@/pages/sessions-page";
-import { ExportsPage } from "@/pages/exports-page";
 import { ApiKeysPage } from "@/pages/api-keys-page";
 import { AdminPage } from "@/pages/admin-page";
 import { AuthProvider } from "@/features/auth/auth-context";
@@ -34,12 +30,12 @@ export const router = createBrowserRouter([
         children: [
           { path: "/", element: <DashboardPage /> },
           { path: "/documents", element: <DocumentsPage /> },
-          { path: "/search", element: <SearchPage /> },
-          { path: "/analysis", element: <AnalysisPage /> },
+          { path: "/search", element: <Navigate to="/assistant?mode=search" replace /> },
+          { path: "/analysis", element: <Navigate to="/assistant?mode=analyze" replace /> },
           { path: "/tickets", element: <TicketsPage /> },
           { path: "/assistant", element: <AssistantPage /> },
-          { path: "/sessions", element: <SessionsPage /> },
-          { path: "/exports", element: <ExportsPage /> },
+          { path: "/sessions", element: <Navigate to="/assistant" replace /> },
+          { path: "/exports", element: <Navigate to="/assistant" replace /> },
           { path: "/api-keys", element: <ApiKeysPage /> },
           { path: "/admin", element: <AdminPage /> },
         ],
