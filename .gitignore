@@ -5,3 +5,8 @@ __pycache__/
 *.pyc
 structure.txt
 body.json
+node_modules/
+dist/
+build/
+frontend/dist/
+frontend/build/
