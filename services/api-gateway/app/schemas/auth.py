@@ -23,10 +23,6 @@ class UserSignupRequest(
     full_name: str
     tenant_id: str
 
-    role: UserRole = (
-        UserRole.USER
-    )
-
 
 class UserLoginRequest(
     BaseModel

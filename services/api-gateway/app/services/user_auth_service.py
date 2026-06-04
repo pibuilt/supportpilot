@@ -81,7 +81,6 @@ class UserAuthService:
         password: str,
         full_name: str,
         tenant_id: str,
-        role: str = "user",
     ):
         existing_user = (
             self.db.query(User)
@@ -110,18 +109,36 @@ class UserAuthService:
             .count()
         )
 
-        # Bootstrap first-ever platform admin
+        # First user on the entire platform
         if existing_admin == 0:
+
             role = "root_admin"
 
-        # Block unauthorized admin creation after bootstrap
-        elif role in [
-            "admin",
-            "root_admin",
-        ]:
-            raise ValueError(
-                "Only existing admins can create admin users"
+        else:
+
+            tenant_admin_count = (
+                self.db.query(User)
+                .filter(
+                    User.tenant_id
+                    == tenant_id,
+
+                    User.role.in_(
+                        [
+                            "admin",
+                            "root_admin",
+                        ]
+                    ),
+                )
+                .count()
             )
+
+            # First admin for this tenant
+            if tenant_admin_count == 0:
+                role = "admin"
+
+            # Everybody else
+            else:
+                role = "user"
 
         user = User(
             email=email,

@@ -51,7 +51,6 @@ def signup(
             password=request.password,
             full_name=request.full_name,
             tenant_id=request.tenant_id,
-            role=request.role.value,
         )
 
     except ValueError as e:
