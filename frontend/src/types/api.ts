@@ -38,7 +38,7 @@ export interface DocumentDetail extends DocumentSummary {
 export interface AsyncJob<T = unknown> {
   job_id: string;
   job_type: string;
-  status: "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED" | "DEAD_LETTER";
+  status: "QUEUED" | "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED" | "DEAD_LETTER";
   retry_count: number;
   error_message: string | null;
   result: T | null;

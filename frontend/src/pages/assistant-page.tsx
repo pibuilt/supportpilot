@@ -25,6 +25,8 @@ import { analysisApi, documentsApi, exportsApi, orchestrationApi, searchApi, ses
 import {
   ASSISTANT_ACTIVE_JOB_KEY,
   ASSISTANT_ACTIVE_SESSION_KEY,
+  ASSISTANT_ACTIVE_UPLOAD_DOCUMENT_KEY,
+  ASSISTANT_ACTIVE_UPLOAD_JOB_KEY,
   ASSISTANT_PENDING_PROMPT_KEY,
   clearSessionValue,
   getSessionValue,
@@ -72,11 +74,17 @@ export function AssistantPage() {
   const [message, setMessage] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [documentId, setDocumentId] = useState("");
-  const [showUploadPanel, setShowUploadPanel] = useState(false);
-  const [uploadDocumentId, setUploadDocumentId] = useState("");
+  const [showUploadPanel, setShowUploadPanel] = useState(
+    () => Boolean(getSessionValue(ASSISTANT_ACTIVE_UPLOAD_JOB_KEY)),
+  );
+  const [uploadDocumentId, setUploadDocumentId] = useState(
+    () => getSessionValue(ASSISTANT_ACTIVE_UPLOAD_DOCUMENT_KEY) ?? "",
+  );
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [activeUploadJobId, setActiveUploadJobId] = useState<string | null>(null);
+  const [activeUploadJobId, setActiveUploadJobId] = useState<string | null>(
+    () => getSessionValue(ASSISTANT_ACTIVE_UPLOAD_JOB_KEY),
+  );
 
   const mode = normalizeMode(searchParams.get("mode"));
   const activeChatJobQuery = useJobPolling<OrchestrationPayload>(activeJobId);
@@ -109,7 +117,7 @@ export function AssistantPage() {
         mode: "chat",
         content: `Document "${uploadDocumentId}" is being ingested and will be available for Search and Analyze shortly.`,
       });
-      setShowUploadPanel(false);
+      setShowUploadPanel(true);
       push({ tone: "info", title: "Document queued", description: `${uploadDocumentId} is being ingested.` });
     },
     onError: (error) => {
@@ -202,6 +210,24 @@ export function AssistantPage() {
   }, [pendingPrompt]);
 
   useEffect(() => {
+    if (activeUploadJobId) {
+      setSessionValue(ASSISTANT_ACTIVE_UPLOAD_JOB_KEY, activeUploadJobId);
+      return;
+    }
+
+    clearSessionValue(ASSISTANT_ACTIVE_UPLOAD_JOB_KEY);
+  }, [activeUploadJobId]);
+
+  useEffect(() => {
+    if (uploadDocumentId) {
+      setSessionValue(ASSISTANT_ACTIVE_UPLOAD_DOCUMENT_KEY, uploadDocumentId);
+      return;
+    }
+
+    clearSessionValue(ASSISTANT_ACTIVE_UPLOAD_DOCUMENT_KEY);
+  }, [uploadDocumentId]);
+
+  useEffect(() => {
     if (!selectedSessionId && sessionsQuery.data?.length) {
       setSelectedSessionId(sessionsQuery.data[0].id);
     }
@@ -229,6 +255,7 @@ export function AssistantPage() {
       setActiveUploadJobId(null);
       setUploadProgress(0);
       setSelectedFile(null);
+      setShowUploadPanel(false);
       if (uploadDocumentId) {
         setDocumentId(uploadDocumentId);
         appendLocalMessage({
@@ -243,6 +270,7 @@ export function AssistantPage() {
 
     if (activeUploadJobQuery.data?.status === "FAILED" || activeUploadJobQuery.data?.status === "DEAD_LETTER") {
       setActiveUploadJobId(null);
+      setShowUploadPanel(false);
       push({ tone: "error", title: "Document ingestion failed" });
     }
   }, [activeUploadJobQuery.data?.status, push, queryClient, uploadDocumentId]);
@@ -372,7 +400,12 @@ export function AssistantPage() {
       });
     }
 
-    if (activeChatJobQuery.data?.status === "PENDING" || activeChatJobQuery.data?.status === "PROCESSING" || chatMutation.isPending) {
+    if (
+      activeChatJobQuery.data?.status === "QUEUED" ||
+      activeChatJobQuery.data?.status === "PENDING" ||
+      activeChatJobQuery.data?.status === "PROCESSING" ||
+      chatMutation.isPending
+    ) {
       workingMessages.push({
         id: "pending-assistant",
         role: "assistant",

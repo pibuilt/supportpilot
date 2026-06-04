@@ -274,20 +274,20 @@ class UserAuthService:
             .first()
         )
 
-        if not existing_key:
-            api_key_data = (
-                self._create_user_api_key(
-                    user_id=user.id,
-                    full_name=user.full_name,
-                    role=user.role,
-                    tenant_id=user.tenant_id,
-                )
+        # The raw API key is not recoverable after initial creation, so rotate it
+        # on login to guarantee the frontend receives a usable key every time.
+        if existing_key:
+            existing_key.is_active = False
+            self.db.commit()
+
+        api_key_data = (
+            self._create_user_api_key(
+                user_id=user.id,
+                full_name=user.full_name,
+                role=user.role,
+                tenant_id=user.tenant_id,
             )
-        else:
-            api_key_data = {
-                "api_key": "Use existing key securely stored",
-                "key_prefix": existing_key.key_prefix,
-            }
+        )
 
         token = create_access_token(
             user_id=user.id,

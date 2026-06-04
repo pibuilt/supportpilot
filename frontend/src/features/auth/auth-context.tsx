@@ -13,7 +13,7 @@ import {
   API_KEY,
   AUTH_EVENT,
   TOKEN_KEY,
-  clearSessionStorage,
+  clearAuthStorage,
   getApiKey,
   getToken,
   setApiKey,
@@ -64,7 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const logout = useCallback(() => {
-    clearSessionStorage();
+    clearAuthStorage();
     queryClient.clear();
     setUser(null);
     syncFromStorage();
@@ -90,7 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(currentUser);
         syncFromStorage();
       } catch {
-        clearSessionStorage();
+        clearAuthStorage();
         setUser(null);
       } finally {
         setIsBootstrapping(false);

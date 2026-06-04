@@ -9,6 +9,13 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { documentsApi, exportsApi } from "@/lib/api";
+import {
+  DOCUMENTS_ACTIVE_JOB_DOCUMENT_KEY,
+  DOCUMENTS_ACTIVE_JOB_KEY,
+  clearSessionValue,
+  getSessionValue,
+  setSessionValue,
+} from "@/lib/storage";
 import { useJobPolling } from "@/hooks/use-job-polling";
 import { downloadBlob, formatDate } from "@/lib/utils";
 import { useToast } from "@/lib/toast";
@@ -19,10 +26,10 @@ export function DocumentsPage() {
   const { push } = useToast();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [documentId, setDocumentId] = useState("");
+  const [documentId, setDocumentId] = useState(() => getSessionValue(DOCUMENTS_ACTIVE_JOB_DOCUMENT_KEY) ?? "");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [activeJobId, setActiveJobId] = useState<string | null>(null);
+  const [activeJobId, setActiveJobId] = useState<string | null>(() => getSessionValue(DOCUMENTS_ACTIVE_JOB_KEY));
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
 
   const documentsQuery = useQuery({
@@ -74,6 +81,24 @@ export function DocumentsPage() {
       queryClient.invalidateQueries({ queryKey: ["documents"] });
     }
   }, [activeJobQuery.data?.status, queryClient]);
+
+  useEffect(() => {
+    if (activeJobId) {
+      setSessionValue(DOCUMENTS_ACTIVE_JOB_KEY, activeJobId);
+      return;
+    }
+
+    clearSessionValue(DOCUMENTS_ACTIVE_JOB_KEY);
+  }, [activeJobId]);
+
+  useEffect(() => {
+    if (documentId) {
+      setSessionValue(DOCUMENTS_ACTIVE_JOB_DOCUMENT_KEY, documentId);
+      return;
+    }
+
+    clearSessionValue(DOCUMENTS_ACTIVE_JOB_DOCUMENT_KEY);
+  }, [documentId]);
 
   function onFilePicked(file: File | null) {
     setSelectedFile(file);
