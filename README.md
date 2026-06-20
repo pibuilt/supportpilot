@@ -1023,23 +1023,11 @@ Rules:
 
 This codebase already goes beyond a demo, but there are still visible trade-offs in the current implementation.
 
-1. Product auth and dashboard auth are split across API keys and JWTs.
-   - This is practical for the current platform shape, but it increases client-state complexity.
-
-2. Async jobs are poll-based rather than websocket-first.
-   - Simple and reliable, but not the most responsive UX for long-running workflows.
-
-3. The frontend documents some backend gaps directly in the UI.
-   - Example: API key admin actions exist, but a full user-facing API key listing/management flow is not fully exposed.
-
-4. Local bootstrap scripts prune Docker aggressively.
-   - Good for avoiding stale local state, but expensive if you want faster iterative rebuilds.
-
-5. CI/CD, production nginx, and cloud deployment automation are not present in this repo snapshot.
+1. CI/CD, production nginx, and cloud deployment automation are not present in this repo snapshot.
    - Those would be natural next steps if this platform were being pushed toward a fuller production story.
 
-6. Retrieval, analysis, and orchestration all depend on a healthy embeddings/model path.
+2. Retrieval, analysis, and orchestration all depend on a healthy embeddings/model path.
    - Adding more explicit readiness checks around provider availability would make failures easier to diagnose earlier.
 
-7. The LLM service and AI service are both present, but some embedding generation in the gateway still calls Ollama directly.
+3. The LLM service and AI service are both present, but some embedding generation in the gateway still calls Ollama directly.
    - Unifying all model access behind one internal boundary would simplify operational reasoning.
