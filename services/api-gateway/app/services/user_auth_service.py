@@ -70,9 +70,133 @@ class UserAuthService:
 
         return {
             "api_key": raw_key,
+            "api_key_id": db_key.id,
             "key_prefix": (
                 db_key.key_prefix
             ),
+        }
+
+    def list_user_api_keys(
+        self,
+        user_id: str,
+        tenant_id: str,
+    ):
+        keys = (
+            self.db.query(APIKey)
+            .filter(
+                APIKey.user_id == user_id,
+                APIKey.tenant_id == tenant_id,
+            )
+            .order_by(
+                APIKey.created_at.desc()
+            )
+            .all()
+        )
+
+        return [
+            {
+                "api_key_id": key.id,
+                "key_prefix": key.key_prefix,
+                "owner": key.owner,
+                "role": key.role,
+                "tenant_id": key.tenant_id,
+                "is_active": key.is_active,
+                "created_at": key.created_at,
+            }
+            for key in keys
+        ]
+
+    def create_additional_api_key(
+        self,
+        user_id: str,
+    ):
+        user = (
+            self.db.query(User)
+            .filter(
+                User.id == user_id,
+                User.is_active == True,
+            )
+            .first()
+        )
+
+        if not user:
+            raise ValueError(
+                "User not found"
+            )
+
+        return self._create_user_api_key(
+            user_id=user.id,
+            full_name=user.full_name,
+            role=user.role,
+            tenant_id=user.tenant_id,
+        )
+
+    def revoke_user_api_key(
+        self,
+        user_id: str,
+        tenant_id: str,
+        api_key_id: str,
+    ):
+        api_key = (
+            self.db.query(APIKey)
+            .filter(
+                APIKey.id == api_key_id,
+                APIKey.user_id == user_id,
+                APIKey.tenant_id == tenant_id,
+            )
+            .first()
+        )
+
+        if not api_key:
+            raise ValueError(
+                "API key not found"
+            )
+
+        api_key.is_active = False
+        self.db.commit()
+        self.db.refresh(api_key)
+        return api_key
+
+    def regenerate_user_api_key(
+        self,
+        user_id: str,
+        tenant_id: str,
+        api_key_id: str,
+    ):
+        api_key = (
+            self.db.query(APIKey)
+            .filter(
+                APIKey.id == api_key_id,
+                APIKey.user_id == user_id,
+                APIKey.tenant_id == tenant_id,
+            )
+            .first()
+        )
+
+        if not api_key:
+            raise ValueError(
+                "API key not found"
+            )
+
+        raw_key = (
+            generate_api_key()
+        )
+
+        api_key.key_prefix = (
+            get_key_prefix(raw_key)
+        )
+        api_key.hashed_key = (
+            hash_api_key(raw_key)
+        )
+        api_key.is_active = True
+
+        self.db.commit()
+        self.db.refresh(api_key)
+
+        return {
+            "api_key": raw_key,
+            "api_key_id": api_key.id,
+            "key_prefix": api_key.key_prefix,
         }
 
     def signup(
@@ -274,21 +398,6 @@ class UserAuthService:
             .first()
         )
 
-        # The raw API key is not recoverable after initial creation, so rotate it
-        # on login to guarantee the frontend receives a usable key every time.
-        if existing_key:
-            existing_key.is_active = False
-            self.db.commit()
-
-        api_key_data = (
-            self._create_user_api_key(
-                user_id=user.id,
-                full_name=user.full_name,
-                role=user.role,
-                tenant_id=user.tenant_id,
-            )
-        )
-
         token = create_access_token(
             user_id=user.id,
             email=user.email,
@@ -313,12 +422,12 @@ class UserAuthService:
 
         return {
             "access_token": token,
-            "api_key": api_key_data[
-                "api_key"
-            ],
-            "key_prefix": api_key_data[
-                "key_prefix"
-            ],
+            "api_key": "",
+            "key_prefix": (
+                existing_key.key_prefix
+                if existing_key
+                else ""
+            ),
             "user_id": user.id,
             "email": user.email,
             "full_name": user.full_name,

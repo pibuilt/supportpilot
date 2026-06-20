@@ -665,11 +665,25 @@ Linux:
 What the bootstrap scripts do:
 
 1. stop the previous Compose environment
-2. prune Docker system state
+2. optionally prune Docker state only when you request a clean bootstrap
 3. start Postgres, Redis, and the supporting AI/LLM services
 4. run `docker compose run --rm migrate`
 5. start the API, worker, frontend, and observability services
 6. verify API health
+
+Windows clean reset:
+
+```powershell
+.\scripts\windows\bootstrap.ps1 -Clean
+```
+
+Linux clean reset:
+
+```bash
+SUPPORTPILOT_CLEAN_BOOTSTRAP=1 ./scripts/linux/bootstrap.sh
+```
+
+The scripts also accept `-Clear` on Windows and `--clear` on Linux as clean-reset aliases.
 
 ### Path B: run the stack directly with Docker Compose
 
@@ -769,7 +783,7 @@ Creates a user and returns:
 
 #### `POST /v1/auth/login`
 
-Returns the same payload shape as signup. On login, any existing active API key for that user is rotated and a fresh raw key is returned.
+Returns the same payload shape as signup. Login now issues only the bearer session by default and leaves API key lifecycle to the API Keys management flows.
 
 #### `GET /v1/auth/me`
 
@@ -934,7 +948,7 @@ Cause:
 
 Fix:
 
-- log in again to receive a fresh rotated API key
+- open the API Keys page to issue or rotate a new product API key if needed
 - confirm `/v1/api-keys/validate` succeeds
 
 ### Ingestion job stays `FAILED` or reaches `DEAD_LETTER`

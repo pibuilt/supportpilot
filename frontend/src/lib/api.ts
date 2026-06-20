@@ -7,6 +7,8 @@ import {
   triggerLogoutEvent,
 } from "@/lib/storage";
 import type {
+  ApiKeyIssueResponse,
+  ApiKeySummary,
   AdminUser,
   AnalysisPayload,
   AsyncJob,
@@ -71,9 +73,14 @@ bearerClient.interceptors.request.use((config) => {
 
 productClient.interceptors.request.use((config) => {
   const apiKey = getApiKey();
+  const token = getToken();
 
   if (apiKey) {
     config.headers["x-api-key"] = apiKey;
+  }
+
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
 
   return config;
@@ -175,6 +182,53 @@ export const jobsApi = {
     const { data } = await productClient.get<AsyncJob<T>>(`/v1/jobs/${jobId}`);
     return data;
   },
+  async stream<T>(
+    jobId: string,
+    options: {
+      signal?: AbortSignal;
+      onMessage: (job: AsyncJob<T>) => void;
+    },
+  ) {
+    const response = await fetch(`${baseURL}/v1/jobs/${jobId}/stream`, {
+      headers: {
+        ...(getApiKey() ? { "x-api-key": getApiKey()! } : {}),
+        ...(getToken() ? { Authorization: `Bearer ${getToken()}` } : {}),
+        Accept: "text/event-stream",
+      },
+      signal: options.signal,
+    });
+
+    if (!response.ok || !response.body) {
+      throw new Error(`Unable to stream job ${jobId}`);
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) {
+        break;
+      }
+
+      buffer += decoder.decode(value, { stream: true });
+      const chunks = buffer.split("\n\n");
+      buffer = chunks.pop() ?? "";
+
+      for (const chunk of chunks) {
+        const line = chunk
+          .split("\n")
+          .find((entry) => entry.startsWith("data: "));
+
+        if (!line) {
+          continue;
+        }
+
+        options.onMessage(JSON.parse(line.slice(6)) as AsyncJob<T>);
+      }
+    }
+  },
 };
 
 export const searchApi = {
@@ -250,11 +304,31 @@ export const apiKeysApi = {
     });
     return data;
   },
+  async listMine() {
+    const { data } = await bearerClient.get<ApiKeySummary[]>("/v1/api-keys/mine");
+    return data;
+  },
+  async create() {
+    const { data } = await bearerClient.post<ApiKeyIssueResponse>("/v1/api-keys/mine");
+    return data;
+  },
+  async revoke(apiKeyId: string) {
+    const { data } = await bearerClient.patch<{ message: string }>(`/v1/api-keys/mine/${apiKeyId}/revoke`);
+    return data;
+  },
+  async regenerate(apiKeyId: string) {
+    const { data } = await bearerClient.patch<ApiKeyIssueResponse>(`/v1/api-keys/mine/${apiKeyId}/regenerate`);
+    return data;
+  },
 };
 
 export const adminApi = {
   async listUsers() {
     const { data } = await bearerClient.get<AdminUser[]>("/v1/admin/users");
+    return data;
+  },
+  async listApiKeys() {
+    const { data } = await bearerClient.get<ApiKeySummary[]>("/v1/admin/api-keys");
     return data;
   },
   async suspendUser(userId: string) {

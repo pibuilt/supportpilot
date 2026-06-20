@@ -79,6 +79,42 @@ def list_users(
     ]
 
 
+@router.get("/api-keys")
+def list_api_keys(
+    current_user: dict = Depends(
+        get_current_user
+    ),
+    db: Session = Depends(get_db),
+):
+    require_admin(current_user)
+
+    keys = (
+        db.query(APIKey)
+        .filter(
+            APIKey.tenant_id
+            == current_user["tenant_id"]
+        )
+        .order_by(
+            APIKey.created_at.desc()
+        )
+        .all()
+    )
+
+    return [
+        {
+            "api_key_id": api_key.id,
+            "key_prefix": api_key.key_prefix,
+            "owner": api_key.owner,
+            "user_id": api_key.user_id,
+            "role": api_key.role,
+            "tenant_id": api_key.tenant_id,
+            "is_active": api_key.is_active,
+            "created_at": api_key.created_at,
+        }
+        for api_key in keys
+    ]
+
+
 @router.patch(
     "/users/{user_id}/suspend"
 )

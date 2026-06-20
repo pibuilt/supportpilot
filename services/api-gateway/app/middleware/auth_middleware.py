@@ -11,6 +11,12 @@ from app.db.session import (
 from app.services.auth_service import (
     AuthService,
 )
+from app.services.user_auth_service import (
+    UserAuthService,
+)
+from app.utils.security import (
+    verify_access_token,
+)
 
 
 EXCLUDED_PATHS = {
@@ -61,33 +67,85 @@ class AuthMiddleware(
         api_key = request.headers.get(
             "x-api-key"
         )
-
-        if not api_key:
-            return JSONResponse(
-                status_code=401,
-                content={
-                    "detail": "Missing API Key"
-                },
-            )
+        authorization = request.headers.get(
+            "authorization"
+        )
 
         db: Session = SessionLocal()
 
         try:
-            auth_service = (
-                AuthService(db)
-            )
+            result = None
+            auth_mode = None
 
-            result = (
-                auth_service.validate_api_key(
-                    api_key
+            if api_key:
+                auth_service = (
+                    AuthService(db)
                 )
-            )
 
-            if not result["valid"]:
+                candidate = (
+                    auth_service.validate_api_key(
+                        api_key
+                    )
+                )
+
+                if candidate["valid"]:
+                    result = candidate
+                    auth_mode = "api_key"
+
+            if (
+                result is None
+                and authorization
+                and authorization.startswith(
+                    "Bearer "
+                )
+            ):
+                token = authorization.replace(
+                    "Bearer ",
+                    "",
+                )
+                payload = (
+                    verify_access_token(token)
+                )
+
+                if payload:
+                    user_service = (
+                        UserAuthService(db)
+                    )
+                    user = (
+                        user_service.get_current_user(
+                            payload["sub"]
+                        )
+                    )
+
+                    if user:
+                        result = {
+                            "valid": True,
+                            "owner": user[
+                                "full_name"
+                            ],
+                            "user_id": user[
+                                "user_id"
+                            ],
+                            "role": user[
+                                "role"
+                            ],
+                            "tenant_id": user[
+                                "tenant_id"
+                            ],
+                            "api_key_id": None,
+                        }
+                        auth_mode = "bearer"
+
+            if result is None:
+                detail = (
+                    "Invalid API Key"
+                    if api_key
+                    else "Missing authentication"
+                )
                 return JSONResponse(
                     status_code=401,
                     content={
-                        "detail": "Invalid API Key"
+                        "detail": detail
                     },
                 )
 
@@ -114,22 +172,26 @@ class AuthMiddleware(
                     "api_key_id"
                 ]
             )
+            request.state.auth_mode = (
+                auth_mode
+            )
 
             response = await call_next(
                 request
             )
 
-            auth_service.log_usage(
-                api_key_id=result[
-                    "api_key_id"
-                ],
-                tenant_id=result[
-                    "tenant_id"
-                ],
-                endpoint=request.url.path,
-                status_code=response.status_code,
-                tokens_used=0,
-            )
+            if result["api_key_id"]:
+                AuthService(db).log_usage(
+                    api_key_id=result[
+                        "api_key_id"
+                    ],
+                    tenant_id=result[
+                        "tenant_id"
+                    ],
+                    endpoint=request.url.path,
+                    status_code=response.status_code,
+                    tokens_used=0,
+                )
 
             return response
 

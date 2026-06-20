@@ -131,8 +131,10 @@ export interface HealthPayload {
 export interface ValidationPayload {
   valid: boolean;
   owner?: string;
+  user_id?: string;
   role?: string;
   tenant_id?: string;
+  api_key_id?: string;
 }
 
 export interface AdminUser {
@@ -142,6 +144,23 @@ export interface AdminUser {
   role: UserRole;
   tenant_id: string;
   is_active: boolean;
+}
+
+export interface ApiKeySummary {
+  api_key_id: string;
+  key_prefix: string;
+  owner: string;
+  user_id?: string;
+  role: UserRole;
+  tenant_id: string;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface ApiKeyIssueResponse {
+  api_key_id: string;
+  api_key: string;
+  key_prefix: string;
 }
 
 export interface TicketCreateResponse {

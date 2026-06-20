@@ -155,7 +155,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user,
       token,
       apiKey,
-      hasApiKey: Boolean(apiKey),
+      hasApiKey: Boolean(apiKey || token),
       isAuthenticated: Boolean(token),
       isBootstrapping,
       login,

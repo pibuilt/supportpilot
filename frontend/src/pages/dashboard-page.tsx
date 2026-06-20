@@ -163,7 +163,7 @@ export function DashboardPage() {
           <h3 className="text-lg font-semibold text-slate-950">Delivery notes</h3>
           <div className="mt-4 space-y-3 text-sm text-slate-600">
             <p>The backend currently returns analysis data through direct analysis and export APIs, so this page composes those routes instead of relying on a dedicated analytics summary endpoint.</p>
-            <p>User API key CRUD is not exposed by backend routes today. The frontend surfaces current-key validation and manual admin key actions where the backend supports them.</p>
+            <p>Signed-in operators can use product routes immediately, while the API Keys page now handles issuing, rotating, and revoking integration credentials.</p>
             <p>Containerized deployments should set `VITE_API_BASE_URL=/api` and let Nginx reverse proxy requests to `api-gateway` inside Compose.</p>
           </div>
         </Card>

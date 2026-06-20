@@ -33,7 +33,7 @@ export function LoginPage() {
       <p className="text-xs uppercase tracking-[0.3em] text-slate-400">SupportPilot</p>
       <h1 className="mt-3 text-3xl font-semibold text-slate-950">Sign in to your workspace</h1>
       <p className="mt-3 text-sm text-slate-500">
-        Product routes use your stored API key, while admin and identity routes use JWT bearer auth.
+        Admin and identity routes use JWT bearer auth, and product routes can now fall back to the same signed-in session when no browser-pinned API key is present.
       </p>
 
       <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
