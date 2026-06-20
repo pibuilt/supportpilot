@@ -145,7 +145,7 @@ The frontend is built with `VITE_API_BASE_URL=/api`, so browser calls stay same-
 ### Frontend
 
 - React 18 + TypeScript + Vite: operator-facing SPA
-- TanStack Query: server-state management and polling
+- TanStack Query: server-state management with live job updates and polling fallback
 - React Router: authenticated route structure
 - Tailwind CSS: component styling
 
@@ -250,7 +250,7 @@ supportpilot/
 
 ### 1. User onboarding and access bootstrap
 
-- `POST /v1/auth/signup` creates a user, assigns a role, issues a JWT, and also creates a usable product API key
+- `POST /v1/auth/signup` creates a user, assigns a role, issues a JWT, and also creates an initial product API key
 - the first user on the platform becomes `root_admin`
 - the first admin-like user for a tenant becomes `admin`
 - later users in that tenant become `user`
@@ -260,7 +260,7 @@ supportpilot/
 - operator uploads a file or raw text
 - gateway creates an async job record
 - Celery worker extracts/processes text and writes chunk embeddings into PostgreSQL
-- frontend polls job status until completion
+- frontend follows job status through live updates with polling fallback
 
 ### 3. Semantic search
 
@@ -282,7 +282,7 @@ supportpilot/
 - gateway creates an orchestration job
 - worker invokes the AI service orchestration graph
 - final assistant response is saved into chat sessions/messages
-- frontend polls until the result is complete
+- frontend follows the job to completion through live updates with polling fallback
 
 ### 6. Export and admin workflows
 
@@ -294,7 +294,7 @@ supportpilot/
 
 ## Authentication, RBAC, and Tenant Isolation
 
-SupportPilot uses two auth layers because the repository has both dashboard-facing and product-facing flows.
+SupportPilot uses JWT bearer auth for dashboard identity and supports API keys for explicit product credentials and external-style access.
 
 ### JWT user auth
 
@@ -309,6 +309,7 @@ Behavior:
 
 - signup/login returns a JWT access token
 - the frontend uses bearer auth for current-user and admin calls
+- the frontend can also use the same bearer session for product routes when no browser-pinned API key is present
 - inactive users cannot log in
 
 ### API key auth
@@ -325,10 +326,10 @@ Used for:
 
 Behavior:
 
-- `AuthMiddleware` checks `x-api-key` for most product routes
+- `AuthMiddleware` accepts `x-api-key` and falls back to bearer auth for signed-in product traffic
 - validated key context is placed into `request.state`
 - request state carries `owner`, `user_id`, `role`, `tenant_id`, and `api_key_id`
-- every product request logs usage into `usage_logs`
+- API-key-authenticated product requests log usage into `usage_logs`
 
 ### Tenant isolation
 
@@ -504,7 +505,7 @@ That is a better fit for:
 
 - long-running model calls
 - tool-driven workflows
-- polling-based frontend UX
+- live job-status UX with polling fallback
 - operational retries
 
 ---
@@ -518,15 +519,15 @@ The frontend route tree is centered on authenticated application use rather than
 - `/`
   - dashboard summary using health, documents, sessions, and analysis export preview
 - `/documents`
-  - upload, ingestion polling, document listing, chunk inspection, delete, export
+  - upload, live ingestion status, document listing, chunk inspection, delete, export
 - `/assistant`
   - chat, semantic search, and contract analysis in one workspace
 - `/tickets`
   - support ticket creation and listing
 - `/api-keys`
-  - key validation / product access UX
+  - self-service API key issue, validation, revoke, regenerate, and local browser pinning
 - `/admin`
-  - tenant user management and key admin actions
+  - tenant user management and tenant API key admin actions
 - `/login` and `/signup`
   - JWT user flows
 
@@ -539,7 +540,7 @@ The frontend route tree is centered on authenticated application use rather than
 - TanStack Query is used heavily for:
   - data fetching
   - mutation lifecycle
-  - polling for async jobs
+  - streaming-first async job updates with polling fallback
   - invalidation after completion
 - browser session storage is used to preserve:
   - active session selection
@@ -548,7 +549,7 @@ The frontend route tree is centered on authenticated application use rather than
 
 ### User experience implications
 
-If a user has a valid JWT but no valid product API key, the UI still renders but product workflows pause. That separation is intentional and matches the backend auth model.
+If a user has a valid JWT but no browser-pinned product API key, product workflows still work through bearer fallback. The API Keys page is mainly for explicit credential management, browser pinning, and integration-style usage.
 
 ---
 
@@ -581,9 +582,9 @@ The Compose file includes a one-shot `migrate` service for explicit runs:
 
 - waits for Postgres health
 - runs `alembic upgrade head`
-- is intended to be launched with `docker compose run --rm migrate`
+- can be launched manually when you need an explicit migration container run
 
-The bootstrap scripts use that one-shot job between infrastructure startup and application startup, which avoids relying on Docker Compose's `service_completed_successfully` lifecycle handling.
+The bootstrap scripts launch that migration container explicitly, watch Postgres until the Alembic head revision is present, and then continue application startup. This avoids relying on Docker Compose's `service_completed_successfully` lifecycle handling and also works around local Docker states where the migration container reaches head but never transitions cleanly to `exited`.
 
 ---
 
@@ -644,8 +645,8 @@ GRAFANA_ADMIN_PASSWORD=<password>
 ### Prerequisites
 
 - Docker Desktop or Docker Engine with Compose
-- Python environment available for Alembic and helper scripts
-- Node.js 18+ if you want to run the frontend outside Docker
+- Python environment if you want to run backend services manually outside Docker
+- Node.js 18+ if you want to run the frontend manually outside Docker
 - optional Ollama instance on the host if `LLM_PROVIDER=ollama`
 
 ### Path A: bootstrap the full local stack
@@ -667,7 +668,7 @@ What the bootstrap scripts do:
 1. stop the previous Compose environment
 2. optionally prune Docker state only when you request a clean bootstrap
 3. start Postgres, Redis, and the supporting AI/LLM services
-4. run `docker compose run --rm migrate`
+4. run the migration container and wait for the database to reach Alembic head
 5. start the API, worker, frontend, and observability services
 6. verify API health
 
@@ -685,21 +686,7 @@ SUPPORTPILOT_CLEAN_BOOTSTRAP=1 ./scripts/linux/bootstrap.sh
 
 The scripts also accept `-Clear` on Windows and `--clear` on Linux as clean-reset aliases.
 
-### Path B: run the stack directly with Docker Compose
-
-```bash
-docker compose -f docker-compose.dev.yml up --build -d
-```
-
-If you choose this path manually, run the migration job explicitly before starting the API-facing services:
-
-```bash
-docker compose -f docker-compose.dev.yml up --build -d postgres redis llm-service ai-service
-docker compose -f docker-compose.dev.yml run --rm migrate
-docker compose -f docker-compose.dev.yml up --build -d api-gateway celery-worker frontend prometheus grafana
-```
-
-### Path C: run selected services manually
+### Path B: run selected services manually
 
 API gateway:
 
@@ -783,11 +770,44 @@ Creates a user and returns:
 
 #### `POST /v1/auth/login`
 
-Returns the same payload shape as signup. Login now issues only the bearer session by default and leaves API key lifecycle to the API Keys management flows.
+Returns the same response envelope as signup, but login now issues only the bearer session by default. The `api_key` field is empty on normal login, and API key lifecycle is handled through the API Keys management flows.
 
 #### `GET /v1/auth/me`
 
 Bearer-token route for current user information.
+
+### API keys
+
+#### `GET /v1/api-keys/validate`
+
+Validates an explicit API key and returns:
+
+- `valid`
+- `owner`
+- `user_id`
+- `role`
+- `tenant_id`
+- `api_key_id`
+
+#### `GET /v1/api-keys/mine`
+
+Lists the current user's API keys.
+
+#### `POST /v1/api-keys/mine`
+
+Issues a new API key for the current user and returns:
+
+- `api_key_id`
+- `api_key`
+- `key_prefix`
+
+#### `PATCH /v1/api-keys/mine/{api_key_id}/revoke`
+
+Revokes one of the current user's API keys.
+
+#### `PATCH /v1/api-keys/mine/{api_key_id}/regenerate`
+
+Regenerates one of the current user's API keys and returns a fresh raw key.
 
 ### Documents and ingestion
 
@@ -802,7 +822,7 @@ Multipart upload:
 - `document_id`
 - `file`
 
-Returns job metadata for polling.
+Returns job metadata for async tracking.
 
 #### `GET /v1/documents`
 
@@ -830,6 +850,10 @@ Returns:
 - `result`
 - `started_at`
 - `completed_at`
+
+#### `GET /jobs/{job_id}/stream`
+
+Streams job lifecycle updates as server-sent events.
 
 ### Retrieval and analysis
 
@@ -887,6 +911,7 @@ Each supports `format=json|csv`.
 ### Admin
 
 #### `GET /v1/admin/users`
+#### `GET /v1/admin/api-keys`
 #### `PATCH /v1/admin/users/{user_id}/suspend`
 #### `PATCH /v1/admin/users/{user_id}/activate`
 #### `PATCH /v1/admin/users/{user_id}/promote`
@@ -919,7 +944,7 @@ Async jobs persist lifecycle fields:
 - completion time
 - structured result JSON
 
-That is especially useful for frontend polling and operator debugging.
+That is especially useful for frontend live status updates, polling fallback, and operator debugging.
 
 ### Practical ops note
 
@@ -929,25 +954,30 @@ The current repo includes Prometheus and Grafana in Compose, but it does not inc
 
 ## Operational Troubleshooting
 
-### API returns `401 Missing API Key`
+### Product route returns `401`
 
 Cause:
 
 - request hit a product route protected by `AuthMiddleware`
+- neither a valid bearer session nor a valid API key was available
 
 Fix:
 
-- include `x-api-key`
+- sign in again if your bearer session expired
+- or include `x-api-key`
 - confirm the key is active and belongs to the correct tenant/user
 
 ### Signup/login works but product pages are still blocked
 
 Cause:
 
-- JWT is valid, but the current product API key is missing or invalid in frontend state
+- the browser session is stale
+- or a manually pinned product API key is invalid and overriding bearer fallback
+- or the current user no longer has access to the requested tenant-scoped data
 
 Fix:
 
+- clear the locally stored API key on the API Keys page if you want to fall back to bearer auth
 - open the API Keys page to issue or rotate a new product API key if needed
 - confirm `/v1/api-keys/validate` succeeds
 
