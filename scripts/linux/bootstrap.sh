@@ -10,18 +10,16 @@ echo "Pruning Docker system..."
 docker system prune -af --volumes
 
 echo ""
-echo "Rebuilding SupportPilot..."
-docker compose -f docker-compose.dev.yml up --build -d
+echo "Starting infrastructure and dependency services..."
+docker compose -f docker-compose.dev.yml up --build -d postgres redis llm-service ai-service
 
 echo ""
-echo "Waiting for PostgreSQL initialization..."
-sleep 15
-
-source ./scripts/linux/dev.sh
+echo "Running containerized migrations..."
+docker compose -f docker-compose.dev.yml run --rm migrate
 
 echo ""
-echo "Applying migrations..."
-alembic upgrade head
+echo "Starting application services..."
+docker compose -f docker-compose.dev.yml up --build -d api-gateway celery-worker frontend prometheus grafana
 
 echo ""
 echo "Verifying API health..."

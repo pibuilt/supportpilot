@@ -9,18 +9,16 @@ Write-Host "Pruning Docker system..."
 docker system prune -af --volumes
 
 Write-Host ""
-Write-Host "Rebuilding SupportPilot..."
-docker compose -f docker-compose.dev.yml up --build -d
+Write-Host "Starting infrastructure and dependency services..."
+docker compose -f docker-compose.dev.yml up --build -d postgres redis llm-service ai-service
 
 Write-Host ""
-Write-Host "Waiting for PostgreSQL initialization..."
-Start-Sleep -Seconds 15
-
-. .\scripts\windows\dev.ps1
+Write-Host "Running containerized migrations..."
+docker compose -f docker-compose.dev.yml run --rm migrate
 
 Write-Host ""
-Write-Host "Applying migrations..."
-alembic upgrade head
+Write-Host "Starting application services..."
+docker compose -f docker-compose.dev.yml up --build -d api-gateway celery-worker frontend prometheus grafana
 
 Write-Host ""
 Write-Host "Waiting for API readiness..."

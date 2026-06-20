@@ -197,6 +197,7 @@ supportpilot/
 |
 |- services/
 |  |- api-gateway/
+|  |  |- Dockerfile
 |  |  |- requirements.txt
 |  |  '- app/
 |  |     |- api/v1/              # auth, tickets, ingestion, jobs, search, analyze, export, sessions, admin
@@ -231,7 +232,6 @@ supportpilot/
 |        '- services/
 |
 |- docker-compose.dev.yml
-|- Dockerfile                    # build context for gateway + celery worker + migrate job
 |- .env.example
 '- README.md
 ```
@@ -577,13 +577,13 @@ The Postgres container mounts `docker/postgres/init/01-init-pgvector.sql`, so a 
 
 ### Migration startup behavior
 
-The Compose file includes a one-shot `migrate` service:
+The Compose file includes a one-shot `migrate` service for explicit runs:
 
 - waits for Postgres health
 - runs `alembic upgrade head`
-- API gateway and Celery worker depend on migration completion
+- is intended to be launched with `docker compose run --rm migrate`
 
-That keeps schema application inside normal environment bootstrapping instead of relying only on manual operator discipline.
+The bootstrap scripts use that one-shot job between infrastructure startup and application startup, which avoids relying on Docker Compose's `service_completed_successfully` lifecycle handling.
 
 ---
 
@@ -666,11 +666,10 @@ What the bootstrap scripts do:
 
 1. stop the previous Compose environment
 2. prune Docker system state
-3. rebuild and start `docker-compose.dev.yml`
-4. wait for PostgreSQL initialization
-5. activate the local Python environment helper
-6. run `alembic upgrade head`
-7. verify API health
+3. start Postgres, Redis, and the supporting AI/LLM services
+4. run `docker compose run --rm migrate`
+5. start the API, worker, frontend, and observability services
+6. verify API health
 
 ### Path B: run the stack directly with Docker Compose
 
@@ -678,10 +677,12 @@ What the bootstrap scripts do:
 docker compose -f docker-compose.dev.yml up --build -d
 ```
 
-If you choose this path manually, remember to apply migrations:
+If you choose this path manually, run the migration job explicitly before starting the API-facing services:
 
 ```bash
-alembic upgrade head
+docker compose -f docker-compose.dev.yml up --build -d postgres redis llm-service ai-service
+docker compose -f docker-compose.dev.yml run --rm migrate
+docker compose -f docker-compose.dev.yml up --build -d api-gateway celery-worker frontend prometheus grafana
 ```
 
 ### Path C: run selected services manually
