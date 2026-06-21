@@ -686,6 +686,30 @@ SUPPORTPILOT_CLEAN_BOOTSTRAP=1 ./scripts/linux/bootstrap.sh
 
 The scripts also accept `-Clear` on Windows and `--clear` on Linux as clean-reset aliases.
 
+### Restart containers without bootstrap
+
+Use this when the environment has already been bootstrapped and you just want to stop or restart the running stack without resetting Docker state or rerunning migrations.
+
+Stop the stack:
+
+```bash
+docker compose -f docker-compose.dev.yml stop
+```
+
+Start it again:
+
+```bash
+docker compose -f docker-compose.dev.yml start
+```
+
+Shut it down completely but keep volumes:
+
+```bash
+docker compose -f docker-compose.dev.yml down
+```
+
+Use bootstrap again when you want a full rebuild flow, and add the clean flag only when you explicitly want the aggressive reset path.
+
 ### Path B: run selected services manually
 
 API gateway:
