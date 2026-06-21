@@ -66,6 +66,7 @@ export function AssistantPage() {
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(() =>
     getSessionValue(ASSISTANT_ACTIVE_SESSION_KEY),
   );
+  const [isDraftSession, setIsDraftSession] = useState(false);
   const [activeJobId, setActiveJobId] = useState<string | null>(() =>
     getSessionValue(ASSISTANT_ACTIVE_JOB_KEY),
   );
@@ -228,14 +229,15 @@ export function AssistantPage() {
   }, [uploadDocumentId]);
 
   useEffect(() => {
-    if (!selectedSessionId && sessionsQuery.data?.length) {
+    if (!selectedSessionId && !isDraftSession && sessionsQuery.data?.length) {
       setSelectedSessionId(sessionsQuery.data[0].id);
     }
-  }, [selectedSessionId, sessionsQuery.data]);
+  }, [isDraftSession, selectedSessionId, sessionsQuery.data]);
 
   useEffect(() => {
     if (activeChatJobQuery.data?.status === "COMPLETED" && activeChatJobQuery.data.result?.session_id) {
       setSelectedSessionId(activeChatJobQuery.data.result.session_id);
+      setIsDraftSession(false);
       setActiveJobId(null);
       setPendingPrompt("");
       queryClient.invalidateQueries({ queryKey: ["sessions"] });
@@ -380,14 +382,33 @@ export function AssistantPage() {
   }
 
   const sessions = sessionsQuery.data ?? [];
+  const visibleSessions = useMemo(() => {
+    if (!isDraftSession) {
+      return sessions;
+    }
+
+    return [
+      {
+        id: "__draft__",
+        title: message.trim() ? truncate(message.trim(), 32) : "New chat",
+        message_count: combinedDraftMessageCount(pendingPrompt, localMessages),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+      ...sessions,
+    ];
+  }, [isDraftSession, localMessages, message, pendingPrompt, sessions]);
+
   const combinedMessages = useMemo(() => {
     const persisted =
-      activeSessionQuery.data?.messages.map((entry) => ({
+      selectedSessionId && !isDraftSession
+        ? activeSessionQuery.data?.messages.map((entry) => ({
         id: entry.id,
         role: entry.role as "user" | "assistant",
         content: entry.content,
         mode: "chat" as AssistantMode,
-      })) ?? [];
+      })) ?? []
+        : [];
 
     const workingMessages = [...persisted];
 
@@ -413,9 +434,16 @@ export function AssistantPage() {
         mode: "chat",
       });
     }
-
     return [...workingMessages, ...localMessages];
-  }, [activeChatJobQuery.data?.status, activeSessionQuery.data?.messages, chatMutation.isPending, localMessages, pendingPrompt]);
+  }, [
+    activeChatJobQuery.data?.status,
+    activeSessionQuery.data?.messages,
+    chatMutation.isPending,
+    isDraftSession,
+    localMessages,
+    pendingPrompt,
+    selectedSessionId,
+  ]);
 
   return (
     <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
@@ -430,6 +458,7 @@ export function AssistantPage() {
               type="button"
               variant="secondary"
               onClick={() => {
+                setIsDraftSession(true);
                 setSelectedSessionId(null);
                 setLocalMessages([]);
                 setPendingPrompt("");
@@ -448,17 +477,24 @@ export function AssistantPage() {
               title="Product API key required"
               description="Restore a valid product API key to open the assistant workspace."
             />
-          ) : sessions.length ? (
+          ) : visibleSessions.length ? (
             <div className="space-y-2">
-              {sessions.map((session: SessionSummary) => (
+              {visibleSessions.map((session: SessionSummary) => (
                 <button
                   key={session.id}
                   className={`w-full rounded-2xl px-4 py-3 text-left transition ${
-                    selectedSessionId === session.id
+                    (session.id === "__draft__" && isDraftSession) || selectedSessionId === session.id
                       ? "bg-slate-900 text-white"
                       : "bg-white text-slate-900 hover:bg-slate-50"
                   }`}
                   onClick={() => {
+                    if (session.id === "__draft__") {
+                      setIsDraftSession(true);
+                      setSelectedSessionId(null);
+                      return;
+                    }
+
+                    setIsDraftSession(false);
                     setSelectedSessionId(session.id);
                     setLocalMessages([]);
                     setPendingPrompt("");
@@ -466,7 +502,13 @@ export function AssistantPage() {
                   type="button"
                 >
                   <p className="truncate text-sm font-semibold">{session.title || `Session ${session.id.slice(0, 8)}`}</p>
-                  <p className={`mt-1 text-xs ${selectedSessionId === session.id ? "text-white/70" : "text-slate-500"}`}>
+                  <p
+                    className={`mt-1 text-xs ${
+                      (session.id === "__draft__" && isDraftSession) || selectedSessionId === session.id
+                        ? "text-white/70"
+                        : "text-slate-500"
+                    }`}
+                  >
                     {session.message_count} messages • {formatDate(session.updated_at)}
                   </p>
                 </button>
@@ -602,6 +644,21 @@ export function AssistantPage() {
               {mode === "chat" ? (
                 <form onSubmit={handleChatSubmit}>
                   <div className="rounded-[28px] border border-slate-200 bg-slate-50 p-3">
+                    <div className="mb-3 grid gap-3 md:grid-cols-[minmax(0,1fr)_220px]">
+                      <div className="rounded-2xl bg-white/70 px-4 py-3 text-xs text-slate-500">
+                        {selectedSessionId
+                          ? "Replies will continue in the selected session."
+                          : "You are composing a fresh chat session."}
+                      </div>
+                      <Select value={documentId} onChange={(event) => setDocumentId(event.target.value)}>
+                        <option value="">All ingested knowledge</option>
+                        {documentsQuery.data?.map((document) => (
+                          <option key={document.document_id} value={document.document_id}>
+                            {document.document_id}
+                          </option>
+                        ))}
+                      </Select>
+                    </div>
                     <Textarea
                       rows={3}
                       value={message}
@@ -682,6 +739,10 @@ function normalizeMode(value: string | null): AssistantMode {
   }
 
   return "chat";
+}
+
+function combinedDraftMessageCount(pendingPrompt: string, localMessages: LocalMessage[]) {
+  return localMessages.length + (pendingPrompt ? 1 : 0);
 }
 
 function AssistantMessageCard({ message }: { message: LocalMessage }) {
